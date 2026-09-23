@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import cors from "cors";
+import jwt from "jsonwebtoken";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -56,6 +57,17 @@ app.get("/auth/google/callback", async (req, res) => {
 
     const tokenData = await tokenResponse.json();
     const userURL = "https://www.googleapis.com/oauth2/v2/userinfo";
+
+    const user = jwt.decode(tokenData.id_token);
+    const appToken = jwt.sign(
+      {
+        userId: user.sub,
+        name: user.name,
+        email: user.email,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" },
+    );
 
     const userResponse = await fetch(userURL, {
       headers: {
