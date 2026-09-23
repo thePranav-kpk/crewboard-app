@@ -62,9 +62,13 @@ const googleCallback = async (req, res) => {
   }
 };
 
+const getMe = (req, res) => {
+  res.status(200).json({ user: req.user });
+};
+
 const logout = (req, res) => {
   res.clearCookie(AUTH_TOKEN_COOKIE);
   res.status(200).json({ message: "Logged out successfully" });
 };
 
-export { googleLogin, googleCallback, logout };
+export { googleLogin, googleCallback, getMe, logout };
