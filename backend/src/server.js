@@ -8,6 +8,9 @@ import config from "./config/env.js";
 import authRoutes from "./routes/authRoutes.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { socketAuth } from "./sockets/socketAuth.js";
+import { registerBoardHandlers } from "./sockets/boardHandler.js";
+import console from "console";
 
 // Express server is just a function
 const app = express();
@@ -17,13 +20,21 @@ const httpServer = createServer(app);
 
 const corsOptions = {
   origin: config.CLIENT_URL,
-  credentials: true,          // Allow credentials (cookies) to be sent with requests
+  credentials: true, // Allow credentials (cookies) to be sent with requests
 };
 
 const io = new Server(httpServer, {
   cors: corsOptions,
 });
 
+// Use socketAuth middleware to attach user to socket object
+io.use(socketAuth);
+
+// Listen for connections
+io.on("connection", (socket) => {
+  console.log(`User conencted: ${socket.user.name}(${socket.id})`);
+  registerBoardHandlers(io, socket);
+});
 // Allow client url to make requests
 app.use(cors(corsOptions));
 
