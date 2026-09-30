@@ -2,6 +2,7 @@ import config from "../config/env.js";
 import crypto from "crypto";
 import { getGoogleAuthUrl, getGoogleUser } from "../services/authService.js";
 import { generateToken, verifyToken } from "../utils/jwt.js";
+import User from "../models/User.js";
 
 const OAUTH_STATE_COOKIE = "oauth_state";
 const AUTH_TOKEN_COOKIE = "auth_token";
@@ -33,10 +34,26 @@ const googleCallback = async (req, res) => {
   }
 
   try {
-    const user = await getGoogleUser(code);
+    const googleProfile = await getGoogleUser(code);
 
+    let user = await User.findOne({ googleId: googleProfile.googleId });
+    if (!user) {
+      user = await User.create({
+        googleId: googleProfile.googleId,
+        name: googleProfile.name,
+        email: googleProfile.email,
+        picture: googleProfile.picture,
+      });
+    } else {
+      // Sync latest avatar or name if updated on Google
+      user.name = googleProfile.name;
+      user.picture = googleProfile.picture;
+      await user.save();
+    }
+
+    // Sign JWT with MongoDB userId
     const jwt = generateToken({
-      id: user.googleId,
+      id: user._id.toString(),
       email: user.email,
       name: user.name,
       picture: user.picture,
