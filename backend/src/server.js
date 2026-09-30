@@ -10,7 +10,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { socketAuth } from "./sockets/socketAuth.js";
 import { registerBoardHandlers } from "./sockets/boardHandler.js";
-import console from "console";
+import { connectDB } from "./config/db.js";
 
 // Express server is just a function
 const app = express();
@@ -50,6 +50,9 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/auth", authRoutes);
+
+// Connect to DB
+connectDB();
 
 // Express server & HTTP server listening
 httpServer.listen(config.PORT, () => {
