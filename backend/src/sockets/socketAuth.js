@@ -1,4 +1,4 @@
-import cookie from "cookie";
+import * as cookie from "cookie";
 import { verifyToken } from "../utils/jwt.js";
 
 // Attach user to socket object after verifying token from cookies
