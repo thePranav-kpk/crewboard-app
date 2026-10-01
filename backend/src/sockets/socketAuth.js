@@ -1,4 +1,4 @@
-import * as cookie from "cookie";
+import { parseCookie } from "cookie";
 import { verifyToken } from "../utils/jwt.js";
 
 // Attach user to socket object after verifying token from cookies
@@ -10,7 +10,7 @@ const socketAuth = (socket, next) => {
   }
 
   // Parse the cookies
-  const parsedCookies = cookie.parse(rawCookies);
+  const parsedCookies = parseCookie(rawCookies);
 
   // Extract the token
   const token = parsedCookies.auth_token;
