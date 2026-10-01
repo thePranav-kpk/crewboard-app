@@ -23,12 +23,18 @@ const createRoom = ({ roomId, name, isPrivate, key, ownerId }) => {
 };
 
 const joinRoom = ({ roomId, key, socketId, user }) => {
-  if (!rooms.has(roomId)) {
-    throw new Error("No room exists");
+  let room = rooms.get(roomId);
+
+  // Auto-create room if it doesn't exist yet (e.g. default public room)
+  if (!room) {
+    room = createRoom({
+      roomId: roomId,
+      name: roomId,
+      isPrivate: false,
+      key: null,
+      ownerId: user?.id || "system",
+    });
   }
-
-  const room = rooms.get(roomId);
-
   // Key is required for private rooms
   if (room.isPrivate) {
     if (room.key != key) {
