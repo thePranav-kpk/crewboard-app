@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import usePanZoom from "../hooks/usePanZoom.js";
 import { screenToWorld } from "../utils/coordinates.js";
 import { renderStroke } from "../utils/draw.js";
+import useSocket from "../hooks/useSocket.js";
 
 const Whiteboard = () => {
   // Reference to Canvas DOM element
@@ -29,6 +30,22 @@ const Whiteboard = () => {
     updatePan,
     stopPanning,
   } = usePanZoom();
+
+  const { isConnected, peers, peerCursors, emitStroke, emitCursor } = useSocket(
+    {
+      roomId: "general", // Room id
+      onStrokeReceived: (stroke) => {
+        // Add remote stroke to your board
+        setElements((prev) => [...prev, stroke]);
+      },
+      onInitialElements: (savedElements) => {
+        // Load existing drawings when joining a room
+        if (savedElements && savedElements.length > 0) {
+          setElements(savedElements);
+        }
+      },
+    },
+  );
 
   // Size the Canvas to Window
   useEffect(() => {
@@ -79,7 +96,7 @@ const Whiteboard = () => {
     ctx.restore();
   }, [elements, pan, zoom, isDrawing]);
 
-  // Mouse held down for drawing 
+  // Mouse held down for drawing
   const handlePointerDown = (e) => {
     // Check if mouse middle button (wheel click) pressed for dragging Canvas
     if (tool === "hand" || e.button === 1) {
@@ -118,6 +135,9 @@ const Whiteboard = () => {
 
       const worldPoint = screenToWorld({ x: screenX, y: screenY }, pan, zoom);
 
+      // Broadcast world-coordinates to peers
+      emitCursor(worldPoint.x, worldPoint.y);
+
       // Add to the current points
       currentPoints.current.push(worldPoint);
 
@@ -146,17 +166,18 @@ const Whiteboard = () => {
       currentPoints.current = [];
 
       if (pointsToSave.length > 0) {
+        const newStroke = {
+          id: crypto.randomUUID(),
+          type: "stroke",
+          points: pointsToSave,
+          color,
+          size,
+        };
+        // Broadcast the new stroke to peers
+        emitStroke(newStroke);
+
         // Trigger redraw loop to persist stroke on Canvas board
-        setElements((prev) => [
-          ...prev,
-          {
-            id: crypto.randomUUID(),
-            type: "stroke",
-            points: pointsToSave,
-            color,
-            size,
-          },
-        ]);
+        setElements((prev) => [...prev, newStroke]);
       }
     }
   };
