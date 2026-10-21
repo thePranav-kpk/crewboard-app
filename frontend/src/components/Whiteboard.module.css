@@ -1,0 +1,20 @@
+.container {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  background-color: #d4d6da;
+}
+
+.canvas {
+  display: block;
+  touch-action: none;
+}
+
+.cursorGrab {
+  cursor: grab;
+}
+
+.cursorCrosshair {
+  cursor: crosshair;
+}

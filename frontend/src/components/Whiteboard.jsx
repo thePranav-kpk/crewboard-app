@@ -6,6 +6,7 @@ import { screenToWorld } from "../utils/coordinates.js";
 import { renderStroke } from "../utils/draw.js";
 import useSocket from "../hooks/useSocket.js";
 import Toolbar from "./Toolbar.jsx";
+import styles from "./Whiteboard.module.css";
 
 const Whiteboard = () => {
   // Reference to Canvas DOM element
@@ -184,26 +185,14 @@ const Whiteboard = () => {
   };
 
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        overflow: "hidden",
-        position: "relative",
-        backgroundColor: "#d4d6da",
-      }}
-    >
+    <div className={styles.container}>
       <canvas
         ref={canvasRef}
         onWheel={handleWheel}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        style={{
-          display: "block",
-          cursor: tool === "hand" ? "grab" : "crosshair",
-          touchAction: "none",
-        }}
+        className={`${styles.canvas} ${tool === "hand" ? styles.cursorGrab : styles.cursorCrosshair}`}
       />
 
       {/* Render the toolbar */}
