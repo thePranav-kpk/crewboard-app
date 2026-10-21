@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import usePanZoom from "../hooks/usePanZoom.js";
 import { screenToWorld } from "../utils/coordinates.js";
 import { renderStroke } from "../utils/draw.js";
+import { isStrokeHit } from "../utils/hitTest.js";
 import useSocket from "../hooks/useSocket.js";
 import Toolbar from "./Toolbar.jsx";
 import styles from "./Whiteboard.module.css";
@@ -98,12 +99,49 @@ const Whiteboard = () => {
     ctx.restore();
   }, [elements, pan, zoom, isDrawing]);
 
+  // Calculate the world point
+  const getWorldPoint = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return screenToWorld(
+      { x: e.clientX - rect.left, y: e.clientY - rect.top },
+      pan,
+      zoom,
+    );
+  };
+
+  // To erase stroke
+  const eraseStrokeAt = (worldPoint) => {
+    // Find the first stroke that intersects the eraser cursor
+    const hitStroke = elements.find((stroke) =>
+      isStrokeHit(stroke, worldPoint),
+    );
+
+    if (hitStroke) {
+      // Delete the stroke from canvas state
+      setElements((prev) =>
+        prev.filter((stroke) => stroke.id !== hitStroke.id),
+      );
+    }
+  };
+
   // Mouse held down for drawing
   const handlePointerDown = (e) => {
+    // Get eraser coordinates
+    const worldPoint = getWorldPoint(e);
+
+    if (tool === "eraser") {
+      eraseStrokeAt(worldPoint);
+    }
+
     // Check if mouse middle button (wheel click) pressed for dragging Canvas
     if (tool === "hand" || e.button === 1) {
       startPanning(e.clientX, e.clientY);
-    } else {
+    }
+
+    // Only pen can draw
+    if (tool === "pen") {
       setIsDrawing(true);
 
       const canvas = canvasRef.current;
@@ -124,6 +162,13 @@ const Whiteboard = () => {
 
   // Mouse moving either for drawing or scrolling
   const handlePointerMove = (e) => {
+    // Get eraser coordinates
+    const worldPoint = getWorldPoint(e);
+
+    if (tool === "eraser" && e.buttons === 1) {
+      eraseStrokeAt(worldPoint);
+    }
+
     if (isPanning) {
       updatePan(e.clientX, e.clientY);
     } else if (isDrawing) {
