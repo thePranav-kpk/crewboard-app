@@ -5,6 +5,7 @@ import usePanZoom from "../hooks/usePanZoom.js";
 import { screenToWorld } from "../utils/coordinates.js";
 import { renderStroke } from "../utils/draw.js";
 import useSocket from "../hooks/useSocket.js";
+import Toolbar from "./Toolbar.jsx";
 
 const Whiteboard = () => {
   // Reference to Canvas DOM element
@@ -203,6 +204,16 @@ const Whiteboard = () => {
           cursor: tool === "hand" ? "grab" : "crosshair",
           touchAction: "none",
         }}
+      />
+
+      {/* Render the toolbar */}
+      <Toolbar
+        tool={tool}
+        setTool={setTool}
+        color={color}
+        setColor={setColor}
+        size={size}
+        setSize={setSize}
       />
     </div>
   );
