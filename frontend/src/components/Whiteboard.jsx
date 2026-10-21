@@ -189,6 +189,7 @@ const Whiteboard = () => {
         height: "100vh",
         overflow: "hidden",
         position: "relative",
+        backgroundColor: "#d4d6da",
       }}
     >
       <canvas
