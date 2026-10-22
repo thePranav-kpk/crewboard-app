@@ -1,8 +1,12 @@
-import { joinRoom, leaveRoom, addElement } from "../services/roomService.js";
+import {
+  joinRoom,
+  leaveRoom,
+  addElement,
+  removeElement,
+} from "../services/roomService.js";
 
 // Emit board events to everyone in the room except the sender
 const registerBoardHandlers = (io, socket) => {
-
   // Event for joining room
   socket.on("room:join", ({ roomId, key }, callback) => {
     try {
@@ -39,7 +43,7 @@ const registerBoardHandlers = (io, socket) => {
     }
   });
 
-  // Event for saving drawing 
+  // Event for saving drawing
   socket.on("draw:commit", ({ element }) => {
     if (socket.currentRoom) {
       addElement({ roomId: socket.currentRoom, element });
@@ -67,6 +71,14 @@ const registerBoardHandlers = (io, socket) => {
       socket
         .to(socket.currentRoom)
         .emit("user:left", { userId: socket.user.id });
+    }
+  });
+
+  // Event for deleting
+  socket.on("draw:delete", ({ elementId }) => {
+    if (socket.currentRoom) {
+      removeElement({ roomId: socket.currentRoom, elementId });
+      socket.to(socket.currentRoom).emit("draw:delete", { elementId });
     }
   });
 };

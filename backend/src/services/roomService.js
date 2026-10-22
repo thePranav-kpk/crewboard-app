@@ -82,4 +82,11 @@ const getRoom = (roomId) => {
   return room;
 };
 
-export { createRoom, joinRoom, leaveRoom, addElement, getRoom };
+const removeElement = ({ roomId, elementId }) => {
+  const room = rooms.get(roomId);
+  if (!room) return;
+
+  room.elements = room.elements.filter((el) => el.id !== elementId);
+};
+
+export { createRoom, joinRoom, leaveRoom, addElement, getRoom, removeElement };

@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 
-const useSocket = ({ roomId, onStrokeReceived, onInitialElements }) => {
+const useSocket = ({
+  roomId,
+  onStrokeReceived,
+  onInitialElements,
+  onStrokeDeleted,
+}) => {
   const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
   const [peers, setPeers] = useState([]);
@@ -68,6 +73,11 @@ const useSocket = ({ roomId, onStrokeReceived, onInitialElements }) => {
       setIsConnected(false);
     });
 
+    // Event on delete
+    socket.on("draw:delete", ({ elementId }) => {
+      onStrokeDeleted(elementId);
+    });
+
     return () => {
       socket.disconnect();
     };
@@ -81,7 +91,18 @@ const useSocket = ({ roomId, onStrokeReceived, onInitialElements }) => {
     socketRef.current?.emit("cursor:move", { x, y });
   };
 
-  return { isConnected, peers, peerCursors, emitStroke, emitCursor };
+  const emitDelete = (elementId) => {
+    socketRef.current?.emit("draw:delete", { elementId });
+  };
+
+  return {
+    isConnected,
+    peers,
+    peerCursors,
+    emitStroke,
+    emitCursor,
+    emitDelete,
+  };
 };
 
 export default useSocket;

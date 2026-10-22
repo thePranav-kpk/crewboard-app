@@ -34,21 +34,31 @@ const Whiteboard = () => {
     stopPanning,
   } = usePanZoom();
 
-  const { isConnected, peers, peerCursors, emitStroke, emitCursor } = useSocket(
-    {
-      roomId: "general", // Room id
-      onStrokeReceived: (stroke) => {
-        // Add remote stroke to your board
-        setElements((prev) => [...prev, stroke]);
-      },
-      onInitialElements: (savedElements) => {
-        // Load existing drawings when joining a room
-        if (savedElements && savedElements.length > 0) {
-          setElements(savedElements);
-        }
-      },
+  const {
+    isConnected,
+    peers,
+    peerCursors,
+    emitStroke,
+    emitCursor,
+    emitDelete,
+  } = useSocket({
+    roomId: "general", // Room id
+    onStrokeReceived: (stroke) => {
+      // Add remote stroke to your board
+      setElements((prev) => [...prev, stroke]);
     },
-  );
+    onInitialElements: (savedElements) => {
+      // Load existing drawings when joining a room
+      if (savedElements && savedElements.length > 0) {
+        setElements(savedElements);
+      }
+    },
+    onStrokeDeleted: (elementId) => {
+      if (elementId) {
+        setElements((prev) => prev.filter((e) => e.id !== elementId));
+      }
+    },
+  });
 
   // Size the Canvas to Window
   useEffect(() => {
@@ -120,6 +130,7 @@ const Whiteboard = () => {
 
     if (hitStroke) {
       // Delete the stroke from canvas state
+      emitDelete(hitStroke.id);
       setElements((prev) =>
         prev.filter((stroke) => stroke.id !== hitStroke.id),
       );
