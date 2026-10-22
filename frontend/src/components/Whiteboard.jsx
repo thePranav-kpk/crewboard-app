@@ -4,7 +4,12 @@ import { useRef, useState, useEffect } from "react";
 import usePanZoom from "../hooks/usePanZoom.js";
 import { screenToWorld } from "../utils/coordinates.js";
 import { renderStroke } from "../utils/draw.js";
-import { isStrokeHit } from "../utils/hitTest.js";
+import {
+  isStrokeHit,
+  isStrokeInBox,
+  getStrokeBounds,
+  getGroupBounds,
+} from "../utils/hitTest.js";
 import useSocket from "../hooks/useSocket.js";
 import Toolbar from "./Toolbar.jsx";
 import styles from "./Whiteboard.module.css";
@@ -12,6 +17,12 @@ import styles from "./Whiteboard.module.css";
 const Whiteboard = () => {
   // Reference to Canvas DOM element
   const canvasRef = useRef(null);
+
+  // Ref to check if dragging selected strokes
+  const isDraggingSelectionRef = useRef(null);
+
+  // Ref to store last dragged position
+  const dragLastPosRef = useRef(null);
 
   // Array of all finished strokes
   const [elements, setElements] = useState([]);
@@ -23,6 +34,10 @@ const Whiteboard = () => {
   const [tool, setTool] = useState("pen");
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(4);
+
+  // Store ids for selecting box
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectionBox, setSelectionBox] = useState(null);
 
   const {
     pan,
@@ -98,6 +113,53 @@ const Whiteboard = () => {
     // Redraw all the elements
     elements.forEach((stroke) => renderStroke(ctx, stroke));
 
+    // Draw highlighted box around selected strokes
+    if (selectedIds.length > 0) {
+      const selectedStrokes = elements.filter((s) =>
+        selectedIds.includes(s.id),
+      );
+      const bounds = getGroupBounds(selectedStrokes);
+
+      if (bounds) {
+        ctx.save();
+        ctx.strokeStyle = "#3b82f6";
+        ctx.lineWidth = 1.5 / zoom;
+        ctx.setLineDash([4 / zoom, 4 / zoom]);
+
+        const pad = 6 / zoom;
+        ctx.strokeRect(
+          bounds.minX - pad,
+          bounds.minY - pad,
+          bounds.width + pad * 2,
+          bounds.height + pad * 2,
+        );
+
+        ctx.restore();
+      }
+    }
+
+    // Draw active selection box (while dragging)
+    if (selectionBox) {
+      const { start, current } = selectionBox;
+
+      const x = Math.min(start.x, current.x);
+      const y = Math.min(start.y, current.y);
+      const w = Math.abs(current.x - start.x);
+      const h = Math.abs(current.y - start.y);
+
+      ctx.save();
+
+      ctx.strokeStyle = "#3b82f6";
+      ctx.fillStyle = "rgba(59, 130, 246, 0.1)";
+      ctx.lineWidth = 1.5 / zoom;
+      ctx.setLineDash([5 / zoom, 5 / zoom]);
+
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+
+      ctx.restore();
+    }
+
     if (isDrawing && currentPoints.current.length > 0) {
       renderStroke(ctx, {
         points: currentPoints.current,
@@ -107,7 +169,7 @@ const Whiteboard = () => {
     }
 
     ctx.restore();
-  }, [elements, pan, zoom, isDrawing]);
+  }, [elements, pan, zoom, isDrawing, selectedIds, selectionBox]);
 
   // Calculate the world point
   const getWorldPoint = (e) => {
@@ -142,6 +204,31 @@ const Whiteboard = () => {
     // Get eraser coordinates
     const worldPoint = getWorldPoint(e);
 
+    if (tool === "select") {
+      const selectedStrokes = elements.filter((el) =>
+        selectedIds.includes(el.id),
+      );
+      const bounds = getGroupBounds(selectedStrokes);
+      const pad = 6 / zoom;
+
+      const isHitOnSelected =
+        bounds &&
+        worldPoint.x >= bounds.minX - pad &&
+        worldPoint.x <= bounds.maxX + pad &&
+        worldPoint.y >= bounds.minY - pad &&
+        worldPoint.y <= bounds.maxY + pad;
+
+      // Indicates dragging if hit on selected stroke
+      if (isHitOnSelected) {
+        isDraggingSelectionRef.current = true;
+        dragLastPosRef.current = worldPoint;
+      } else {
+        // Indicates mouse pressed outside selected region, so remove the selected ids and start new selection
+        setSelectedIds([]);
+        setSelectionBox({ start: worldPoint, current: worldPoint });
+      }
+    }
+
     if (tool === "eraser") {
       eraseStrokeAt(worldPoint);
     }
@@ -175,6 +262,36 @@ const Whiteboard = () => {
   const handlePointerMove = (e) => {
     // Get eraser coordinates
     const worldPoint = getWorldPoint(e);
+
+    if (tool === "select" && e.buttons === 1) {
+      // Indicates dragging so every point changes its position evenly
+      if (isDraggingSelectionRef.current) {
+        const deltaX = worldPoint.x - dragLastPosRef.current.x;
+        const deltaY = worldPoint.y - dragLastPosRef.current.y;
+
+        setElements((prev) =>
+          prev.map((stroke) => {
+            if (selectedIds.includes(stroke.id)) {
+              return {
+                ...stroke,
+                points: stroke.points.map((point) => ({
+                  x: point.x + deltaX,
+                  y: point.y + deltaY,
+                })),
+              };
+            }
+            return stroke;
+          }),
+        );
+
+        dragLastPosRef.current = worldPoint;
+      } else {
+        // Indicates selecting box
+        setSelectionBox((prev) =>
+          prev ? { ...prev, current: worldPoint } : null,
+        );
+      }
+    }
 
     if (tool === "eraser" && e.buttons === 1) {
       eraseStrokeAt(worldPoint);
@@ -214,6 +331,29 @@ const Whiteboard = () => {
 
   // Mouse released (held up)
   const handlePointerUp = (e) => {
+    if (tool === "select") {
+      // Indicates dragging completed
+      if (isDraggingSelectionRef.current) {
+        isDraggingSelectionRef.current = false;
+        dragLastPosRef.current = null;
+      } else {
+        // Indicates selection completed
+        if (selectionBox) {
+          // Find strokes intersecting the selection box
+          const strokes = elements.filter((stroke) =>
+            isStrokeInBox(stroke, selectionBox.start, selectionBox.current),
+          );
+
+          // Store selected ids
+          const ids = strokes.map((stroke) => stroke.id);
+          setSelectedIds(ids);
+
+          // Remove selection box
+          setSelectionBox(null);
+        }
+      }
+    }
+
     if (isPanning) {
       stopPanning();
     } else if (isDrawing) {
