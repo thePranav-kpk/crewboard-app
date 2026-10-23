@@ -56,6 +56,7 @@ const Whiteboard = () => {
     emitStroke,
     emitCursor,
     emitDelete,
+    emitUpdate,
   } = useSocket({
     roomId: "general", // Room id
     onStrokeReceived: (stroke) => {
@@ -71,6 +72,18 @@ const Whiteboard = () => {
     onStrokeDeleted: (elementId) => {
       if (elementId) {
         setElements((prev) => prev.filter((e) => e.id !== elementId));
+      }
+    },
+    onElementsUpdated: (updatedElements) => {
+      if (updatedElements) {
+        setElements((prev) =>
+          prev.map((element) => {
+            const newElement = updatedElements.find(
+              (el) => el.id === element.id,
+            );
+            return newElement ? newElement : element;
+          }),
+        );
       }
     },
   });
@@ -336,6 +349,11 @@ const Whiteboard = () => {
       if (isDraggingSelectionRef.current) {
         isDraggingSelectionRef.current = false;
         dragLastPosRef.current = null;
+
+        const updatedElements = elements.filter((stroke) =>
+          selectedIds.includes(stroke.id),
+        );
+        emitUpdate(updatedElements);
       } else {
         // Indicates selection completed
         if (selectionBox) {

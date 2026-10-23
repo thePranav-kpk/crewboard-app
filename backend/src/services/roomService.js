@@ -89,4 +89,23 @@ const removeElement = ({ roomId, elementId }) => {
   room.elements = room.elements.filter((el) => el.id !== elementId);
 };
 
-export { createRoom, joinRoom, leaveRoom, addElement, getRoom, removeElement };
+const updateElements = ({ roomId, updatedElements }) => {
+  const room = rooms.get(roomId);
+  if (!room || !updatedElements || updatedElements.length === 0) return;
+
+  // Replace only the updated elements
+  room.elements = room.elements.map((element) => {
+    const newElement = updatedElements.find((el) => el.id === element.id);
+    return newElement ? newElement : element;
+  });
+};
+
+export {
+  createRoom,
+  joinRoom,
+  leaveRoom,
+  addElement,
+  getRoom,
+  removeElement,
+  updateElements,
+};

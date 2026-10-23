@@ -6,6 +6,7 @@ const useSocket = ({
   onStrokeReceived,
   onInitialElements,
   onStrokeDeleted,
+  onElementsUpdated,
 }) => {
   const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -78,9 +79,15 @@ const useSocket = ({
       onStrokeDeleted(elementId);
     });
 
+    // Event on elements position update
+    socket.on("draw:update", ({ updatedElements }) => {
+      onElementsUpdated(updatedElements);
+    });
+
     return () => {
       socket.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
   const emitStroke = (element) => {
@@ -95,6 +102,10 @@ const useSocket = ({
     socketRef.current?.emit("draw:delete", { elementId });
   };
 
+  const emitUpdate = (updatedElements) => {
+    socketRef.current?.emit("draw:update", { updatedElements });
+  };
+
   return {
     isConnected,
     peers,
@@ -102,6 +113,7 @@ const useSocket = ({
     emitStroke,
     emitCursor,
     emitDelete,
+    emitUpdate,
   };
 };
 

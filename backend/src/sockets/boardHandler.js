@@ -3,6 +3,7 @@ import {
   leaveRoom,
   addElement,
   removeElement,
+  updateElements,
 } from "../services/roomService.js";
 
 // Emit board events to everyone in the room except the sender
@@ -79,6 +80,14 @@ const registerBoardHandlers = (io, socket) => {
     if (socket.currentRoom) {
       removeElement({ roomId: socket.currentRoom, elementId });
       socket.to(socket.currentRoom).emit("draw:delete", { elementId });
+    }
+  });
+
+  // Event for updating elements
+  socket.on("draw:update", ({ updatedElements }) => {
+    if (socket.currentRoom) {
+      updateElements({ roomId: socket.currentRoom, updatedElements });
+      socket.to(socket.currentRoom).emit("draw:update", { updatedElements });
     }
   });
 };
