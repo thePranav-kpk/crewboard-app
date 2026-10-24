@@ -14,6 +14,7 @@ import useSocket from "../hooks/useSocket.js";
 import Toolbar from "./Toolbar.jsx";
 import PeerCursors from "./PeerCursors.jsx";
 import ZoomControls from "./ZoomControls.jsx";
+import Header from "./Header.jsx";
 import styles from "./Whiteboard.module.css";
 
 const Whiteboard = () => {
@@ -55,6 +56,12 @@ const Whiteboard = () => {
   // Store ids for selecting box
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectionBox, setSelectionBox] = useState(null);
+
+  // Lazy initial state
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem("theme");
+    return savedTheme ? savedTheme : "light";
+  });
 
   const {
     pan,
@@ -107,6 +114,11 @@ const Whiteboard = () => {
       }
     },
   });
+
+  // Store theme in localStorage
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   // Store tool, color and size in localStorage
   useEffect(() => {
@@ -440,7 +452,9 @@ const Whiteboard = () => {
   };
 
   return (
-    <div className={styles.container}>
+    <div
+      className={`${styles.container} ${theme === "dark" ? styles.darkContainer : ""}`}
+    >
       <canvas
         ref={canvasRef}
         onPointerDown={handlePointerDown}
@@ -448,6 +462,9 @@ const Whiteboard = () => {
         onPointerUp={handlePointerUp}
         className={`${styles.canvas} ${tool === "hand" ? styles.cursorGrab : styles.cursorCrosshair}`}
       />
+
+      {/* Render the header */}
+      <Header roomId={"general"} theme={theme} setTheme={setTheme} />
 
       {/* Render peer cursors */}
       <PeerCursors peerCursors={peerCursors} pan={pan} zoom={zoom} />

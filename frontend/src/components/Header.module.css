@@ -1,0 +1,177 @@
+.headerContainer {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  padding: 6px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+  user-select: none;
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: all 0.2s ease;
+}
+
+.headerContainerDark {
+  background-color: rgba(24, 24, 27, 0.92);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.roomSection {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.roomBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.01em;
+}
+
+.roomBadgeDark {
+  color: #e4e4e7;
+}
+
+.shareButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background-color: #f3f4f6;
+  color: #374151;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shareButtonDark {
+  background-color: #27272a;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #d4d4d8;
+}
+
+.shareButton:hover {
+  background-color: #e5e7eb;
+}
+
+.shareButtonDark:hover {
+  background-color: #3f3f46;
+}
+
+.shareButtonSuccess {
+  background-color: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background-color: #e5e7eb;
+  margin: 0 2px;
+}
+
+.dividerDark {
+  background-color: #3f3f46;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background-color: transparent;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.iconButtonDark {
+  color: #a1a1aa;
+}
+
+.iconButton:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.iconButtonDark:hover {
+  background-color: #27272a;
+  color: #fafafa;
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatarImg {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.avatarFallback {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #6366f1;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.userName {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userNameDark {
+  color: #e4e4e7;
+}
+
+.logoutButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background-color: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.logoutButton:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}

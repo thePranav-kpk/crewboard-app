@@ -3,6 +3,7 @@ import styles from "./Toolbar.module.css";
 
 const COLORS = [
   { name: "Charcoal", hex: "#1e1e1e" },
+  { name: "White", hex: "#ffffff" },
   { name: "Red", hex: "#ef4444" },
   { name: "Blue", hex: "#3b82f6" },
   { name: "Green", hex: "#10b981" },
@@ -65,7 +66,9 @@ const Toolbar = ({ tool, setTool, color, setColor, size, setSize }) => {
               className={`${styles.colorSwatch} ${isSelected ? styles.colorSwatchActive : ""}`}
               style={{
                 backgroundColor: c.hex,
-                outline: isSelected ? `2px solid ${c.hex}` : "none",
+                outline: isSelected
+                  ? `2px solid ${c.hex === "#ffffff" ? "#9ca3af" : c.hex}`
+                  : "none",
                 outlineOffset: isSelected ? "2px" : "0px",
               }}
             />

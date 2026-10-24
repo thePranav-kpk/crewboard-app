@@ -4,6 +4,11 @@
   overflow: hidden;
   position: relative;
   background-color: #d4d6da;
+  transition: background-color 0.25s ease;
+}
+
+.darkContainer {
+  background-color: #18181b;
 }
 
 .canvas {
