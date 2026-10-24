@@ -1,11 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { screenToWorld } from "../utils/coordinates";
 
 const usePanZoom = () => {
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
+  // Lazy initial state -> For first render JS calculates the function and for next renders it directly uses the value initialized
+  const [zoom, setZoom] = useState(() => {
+    const savedZoomLevel = localStorage.getItem("zoom_level");
+    return savedZoomLevel ? parseFloat(savedZoomLevel) : 1;
+  });
+
+  const [pan, setPan] = useState(() => {
+    const savedPanValue = localStorage.getItem("pan_value");
+    return savedPanValue ? JSON.parse(savedPanValue) : { x: 0, y: 0 };
+  });
+
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+
+  // Store zoom, pan in localStoarge
+  useEffect(() => {
+    localStorage.setItem("zoom_level", zoom.toString());
+    localStorage.setItem("pan_value", JSON.stringify(pan));
+  }, [zoom, pan]);
 
   // To zoom in or out
   const handleWheel = (e) => {
