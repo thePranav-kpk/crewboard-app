@@ -1,14 +1,17 @@
 import { Minus, Plus } from "lucide-react";
 import styles from "./ZoomControls.module.css";
 
-const ZoomControls = ({ zoom, zoomIn, zoomOut, resetView }) => {
+const ZoomControls = ({ zoom, zoomIn, zoomOut, resetView, theme }) => {
   const percentage = Math.round((zoom || 1) * 100);
+  const isDark = theme === "dark";
 
   return (
-    <div className={styles.zoomContainer}>
+    <div
+      className={`${styles.zoomContainer} ${isDark ? styles.zoomContainerDark : ""}`}
+    >
       <button
         type="button"
-        className={styles.zoomButton}
+        className={`${styles.zoomButton} ${isDark ? styles.zoomButtonDark : ""}`}
         onClick={zoomOut}
         title="Zoom Out"
         aria-label="Zoom out"
@@ -18,7 +21,7 @@ const ZoomControls = ({ zoom, zoomIn, zoomOut, resetView }) => {
 
       <button
         type="button"
-        className={styles.zoomPercent}
+        className={`${styles.zoomPercent} ${isDark ? styles.zoomPercentDark : ""}`}
         onClick={resetView}
         title="Reset zoom to 100%"
         aria-label="Reset zoom to 100%"
@@ -28,7 +31,7 @@ const ZoomControls = ({ zoom, zoomIn, zoomOut, resetView }) => {
 
       <button
         type="button"
-        className={styles.zoomButton}
+        className={`${styles.zoomButton} ${isDark ? styles.zoomButtonDark : ""}`}
         onClick={zoomIn}
         title="Zoom In"
         aria-label="Zoom in"

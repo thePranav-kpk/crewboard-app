@@ -502,6 +502,7 @@ const Whiteboard = () => {
         zoomIn={zoomIn}
         zoomOut={zoomOut}
         resetView={resetView}
+        theme={theme}
       />
     </div>
   );

@@ -15,6 +15,13 @@
   box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
   font-family: system-ui, -apple-system, sans-serif;
   user-select: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.toolbarDark {
+  background-color: rgba(24, 24, 27, 0.92);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .toolSection {
@@ -42,6 +49,15 @@
   background-color: #f3f4f6;
 }
 
+.toolButtonDark {
+  color: #9ca3af;
+}
+
+.toolButtonDark:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #f4f4f5;
+}
+
 .toolButtonActive {
   background-color: #1e1e1e;
   color: #ffffff;
@@ -52,11 +68,25 @@
   background-color: #1e1e1e;
 }
 
+.toolButtonActiveDark {
+  background-color: #ffffff;
+  color: #18181b;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+}
+
+.toolButtonActiveDark:hover {
+  background-color: #ffffff;
+}
+
 .divider {
   width: 1px;
   height: 26px;
   background-color: #e5e7eb;
   margin: 0 4px;
+}
+
+.dividerDark {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .colorSection {
@@ -77,9 +107,14 @@
   border-radius: 50%;
   border: 2px solid #ffffff;
   cursor: pointer;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.16), 0 1px 3px rgba(0, 0, 0, 0.12);
   transform: scale(1);
   transition: transform 0.15s ease, outline 0.15s ease;
+}
+
+.colorSwatchDark {
+  border: 2px solid #18181b;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .colorSwatchActive {
@@ -115,9 +150,24 @@
   background-color: #f9fafb;
 }
 
+.sizeButtonDark {
+  color: #9ca3af;
+}
+
+.sizeButtonDark:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #f4f4f5;
+}
+
 .sizeButtonActive {
   background-color: #f3f4f6;
   color: #111827;
+  font-weight: 600;
+}
+
+.sizeButtonActiveDark {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
   font-weight: 600;
 }
 

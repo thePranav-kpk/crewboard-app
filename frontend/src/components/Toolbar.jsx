@@ -24,14 +24,17 @@ const TOOLS = [
   { id: "hand", label: "Hand", icon: Hand },
 ];
 
-const Divider = () => <div className={styles.divider} />;
+const Divider = ({ isDark }) => (
+  <div className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`} />
+);
 
 const Toolbar = ({ tool, setTool, color, setColor, size, setSize, theme }) => {
+  const isDark = theme === "dark";
   const isColorDisabled = tool !== "pen";
   const isSizeDisabled = tool !== "pen";
 
   return (
-    <div className={styles.toolbar}>
+    <div className={`${styles.toolbar} ${isDark ? styles.toolbarDark : ""}`}>
       {/* 1. Tools Section */}
       <div className={styles.toolSection}>
         {TOOLS.map((t) => {
@@ -42,7 +45,13 @@ const Toolbar = ({ tool, setTool, color, setColor, size, setSize, theme }) => {
               key={t.id}
               onClick={() => setTool(t.id)}
               title={t.label}
-              className={`${styles.toolButton} ${isActive ? styles.toolButtonActive : ""}`}
+              className={`${styles.toolButton} ${isDark ? styles.toolButtonDark : ""} ${
+                isActive
+                  ? isDark
+                    ? styles.toolButtonActiveDark
+                    : styles.toolButtonActive
+                  : ""
+              }`}
             >
               <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
             </button>
@@ -50,7 +59,7 @@ const Toolbar = ({ tool, setTool, color, setColor, size, setSize, theme }) => {
         })}
       </div>
 
-      <Divider />
+      <Divider isDark={isDark} />
 
       {/* 2. Color Palette Section */}
       <div
@@ -69,12 +78,12 @@ const Toolbar = ({ tool, setTool, color, setColor, size, setSize, theme }) => {
               key={c.hex}
               onClick={() => setColor(c.hex)}
               title={c.name}
-              className={`${styles.colorSwatch} ${isSelected ? styles.colorSwatchActive : ""}`}
+              className={`${styles.colorSwatch} ${isDark ? styles.colorSwatchDark : ""} ${
+                isSelected ? styles.colorSwatchActive : ""
+              }`}
               style={{
                 backgroundColor: c.hex,
-                outline: isSelected
-                  ? `2px solid ${c.hex === "#ffffff" ? "#9ca3af" : c.hex}`
-                  : "none",
+                outline: isSelected ? `2px solid ${c.hex}` : "none",
                 outlineOffset: isSelected ? "2px" : "0px",
               }}
             />
@@ -82,7 +91,7 @@ const Toolbar = ({ tool, setTool, color, setColor, size, setSize, theme }) => {
         })}
       </div>
 
-      <Divider />
+      <Divider isDark={isDark} />
 
       {/* 3. Stroke Thickness Section */}
       <div
@@ -95,7 +104,13 @@ const Toolbar = ({ tool, setTool, color, setColor, size, setSize, theme }) => {
               key={s.label}
               onClick={() => setSize(s.value)}
               title={`${s.label} (${s.value}px)`}
-              className={`${styles.sizeButton} ${isSelected ? styles.sizeButtonActive : ""}`}
+              className={`${styles.sizeButton} ${isDark ? styles.sizeButtonDark : ""} ${
+                isSelected
+                  ? isDark
+                    ? styles.sizeButtonActiveDark
+                    : styles.sizeButtonActive
+                  : ""
+              }`}
             >
               {/* Dot thickness indicator */}
               <div
@@ -103,7 +118,11 @@ const Toolbar = ({ tool, setTool, color, setColor, size, setSize, theme }) => {
                 style={{
                   width: s.dotSize,
                   height: s.dotSize,
-                  backgroundColor: isSelected ? color : "#9ca3af",
+                  backgroundColor: isSelected
+                    ? color
+                    : isDark
+                      ? "#71717a"
+                      : "#9ca3af",
                 }}
               />
               <span>{s.label}</span>
