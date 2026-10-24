@@ -58,6 +58,46 @@ const usePanZoom = () => {
     setZoom(1);
   };
 
+  // Handle zooming in
+  const zoomIn = () => {
+    const zoomFactor = 1.2;
+    const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.1), 5.0);
+
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+
+    // Find world coordinates around center
+    const worldPoint = screenToWorld({ x: centerX, y: centerY }, pan, zoom);
+
+    // Calculate new pan offsets
+    const newPanX = centerX - worldPoint.x * newZoom;
+    const newPanY = centerY - worldPoint.y * newZoom;
+
+    // Update state
+    setZoom(newZoom);
+    setPan({ x: newPanX, y: newPanY });
+  };
+
+  // Handle zooming out
+  const zoomOut = () => {
+    const zoomFactor = 0.8;
+    const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.1), 5.0);
+
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+
+    // Find world coordinates around center
+    const worldPoint = screenToWorld({ x: centerX, y: centerY }, pan, zoom);
+
+    // Calculate new pan offsets
+    const newPanX = centerX - worldPoint.x * newZoom;
+    const newPanY = centerY - worldPoint.y * newZoom;
+
+    // Update state
+    setZoom(newZoom);
+    setPan({ x: newPanX, y: newPanY });
+  };
+
   return {
     pan,
     zoom,
@@ -69,6 +109,8 @@ const usePanZoom = () => {
     resetView,
     setPan,
     setZoom,
+    zoomIn,
+    zoomOut,
   };
 };
 

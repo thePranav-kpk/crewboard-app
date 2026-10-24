@@ -13,6 +13,7 @@ import {
 import useSocket from "../hooks/useSocket.js";
 import Toolbar from "./Toolbar.jsx";
 import PeerCursors from "./PeerCursors.jsx";
+import ZoomControls from "./ZoomControls.jsx";
 import styles from "./Whiteboard.module.css";
 
 const Whiteboard = () => {
@@ -51,6 +52,9 @@ const Whiteboard = () => {
     startPanning,
     updatePan,
     stopPanning,
+    resetView,
+    zoomIn,
+    zoomOut,
   } = usePanZoom();
 
   const {
@@ -97,7 +101,7 @@ const Whiteboard = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // passive: false prevents toolbar and other components from zooming when canvas is zoomed 
+    // passive: false prevents toolbar and other components from zooming when canvas is zoomed
     canvas.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => canvas.removeEventListener("wheel", handleWheel);
@@ -437,6 +441,14 @@ const Whiteboard = () => {
         setColor={setColor}
         size={size}
         setSize={setSize}
+      />
+
+      {/* Render the zoom controls */}
+      <ZoomControls
+        zoom={zoom}
+        zoomIn={zoomIn}
+        zoomOut={zoomOut}
+        resetView={resetView}
       />
     </div>
   );
