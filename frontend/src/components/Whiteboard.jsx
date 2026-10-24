@@ -92,6 +92,17 @@ const Whiteboard = () => {
     },
   });
 
+  // Zoom only the canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // passive: false prevents toolbar and other components from zooming when canvas is zoomed 
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => canvas.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
+
   // Size the Canvas to Window
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -409,7 +420,6 @@ const Whiteboard = () => {
     <div className={styles.container}>
       <canvas
         ref={canvasRef}
-        onWheel={handleWheel}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
