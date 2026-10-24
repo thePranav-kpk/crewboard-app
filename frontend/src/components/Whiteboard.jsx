@@ -36,9 +36,21 @@ const Whiteboard = () => {
   const currentPoints = useRef([]);
 
   // Store all current drawing options
-  const [tool, setTool] = useState("pen");
-  const [color, setColor] = useState("#000000");
-  const [size, setSize] = useState(4);
+  // Lazy initial state
+  const [tool, setTool] = useState(() => {
+    const savedTool = localStorage.getItem("tool");
+    return savedTool ? savedTool : "pen";
+  });
+
+  const [color, setColor] = useState(() => {
+    const savedColor = localStorage.getItem("color");
+    return savedColor ? savedColor : "#000000";
+  });
+
+  const [size, setSize] = useState(() => {
+    const savedSize = localStorage.getItem("size");
+    return savedSize ? parseInt(savedSize) : 4;
+  });
 
   // Store ids for selecting box
   const [selectedIds, setSelectedIds] = useState([]);
@@ -95,6 +107,13 @@ const Whiteboard = () => {
       }
     },
   });
+
+  // Store tool, color and size in localStorage
+  useEffect(() => {
+    localStorage.setItem("tool", tool);
+    localStorage.setItem("color", color);
+    localStorage.setItem("size", size.toString());
+  }, [tool, color, size]);
 
   // Zoom only the canvas
   useEffect(() => {
