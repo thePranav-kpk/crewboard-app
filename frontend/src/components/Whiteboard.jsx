@@ -12,6 +12,7 @@ import {
 } from "../utils/hitTest.js";
 import useSocket from "../hooks/useSocket.js";
 import Toolbar from "./Toolbar.jsx";
+import PeerCursors from "./PeerCursors.jsx";
 import styles from "./Whiteboard.module.css";
 
 const Whiteboard = () => {
@@ -23,6 +24,9 @@ const Whiteboard = () => {
 
   // Ref to store last dragged position
   const dragLastPosRef = useRef(null);
+
+  // Ref to store last timestamp when cursor changed
+  const lastCursorEmitRef = useRef(0);
 
   // Array of all finished strokes
   const [elements, setElements] = useState([]);
@@ -276,6 +280,12 @@ const Whiteboard = () => {
     // Get eraser coordinates
     const worldPoint = getWorldPoint(e);
 
+    // Broadcast world-coordinates to peers after 40ms elapse from last cursor movement
+    if (Date.now() - lastCursorEmitRef.current > 40) {
+      emitCursor(worldPoint.x, worldPoint.y);
+      lastCursorEmitRef.current = Date.now();
+    }
+
     if (tool === "select" && e.buttons === 1) {
       // Indicates dragging so every point changes its position evenly
       if (isDraggingSelectionRef.current) {
@@ -322,9 +332,6 @@ const Whiteboard = () => {
       const screenY = e.clientY - rect.top;
 
       const worldPoint = screenToWorld({ x: screenX, y: screenY }, pan, zoom);
-
-      // Broadcast world-coordinates to peers
-      emitCursor(worldPoint.x, worldPoint.y);
 
       // Add to the current points
       currentPoints.current.push(worldPoint);
@@ -408,6 +415,9 @@ const Whiteboard = () => {
         onPointerUp={handlePointerUp}
         className={`${styles.canvas} ${tool === "hand" ? styles.cursorGrab : styles.cursorCrosshair}`}
       />
+
+      {/* Render peer cursors */}
+      <PeerCursors peerCursors={peerCursors} pan={pan} zoom={zoom} />
 
       {/* Render the toolbar */}
       <Toolbar
