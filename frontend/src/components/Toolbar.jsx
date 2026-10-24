@@ -26,9 +26,8 @@ const TOOLS = [
 const Divider = () => <div className={styles.divider} />;
 
 const Toolbar = ({ tool, setTool, color, setColor, size, setSize }) => {
-  const isColorDisabled =
-    tool === "eraser" || tool === "hand" || tool === "select";
-  const isSizeDisabled = tool === "hand" || tool === "select";
+  const isColorDisabled = tool !== "pen";
+  const isSizeDisabled = tool !== "pen";
 
   return (
     <div className={styles.toolbar}>
@@ -57,7 +56,7 @@ const Toolbar = ({ tool, setTool, color, setColor, size, setSize }) => {
         className={`${styles.colorSection} ${isColorDisabled ? styles.disabledSection : ""}`}
       >
         {COLORS.map((c) => {
-          const isSelected = color === c.hex && tool==="pen";
+          const isSelected = color === c.hex && tool === "pen";
           return (
             <button
               key={c.hex}
@@ -81,7 +80,7 @@ const Toolbar = ({ tool, setTool, color, setColor, size, setSize }) => {
         className={`${styles.sizeSection} ${isSizeDisabled ? styles.disabledSection : ""}`}
       >
         {SIZES.map((s) => {
-          const isSelected = size === s.value;
+          const isSelected = size === s.value && tool === "pen";
           return (
             <button
               key={s.label}
