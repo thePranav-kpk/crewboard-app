@@ -3,7 +3,7 @@ import { Share2, Check, Sun, Moon, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import styles from "./Header.module.css";
 
-const Header = ({ roomId = "general", theme, setTheme }) => {
+const Header = ({ roomId = "general", theme, handleToggleTheme }) => {
   const { user, logout } = useAuth();
   const [copied, setCopied] = useState(false);
 
@@ -17,10 +17,6 @@ const Header = ({ roomId = "general", theme, setTheme }) => {
     } catch (err) {
       console.error("Failed to copy link:", err);
     }
-  };
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
   return (
@@ -45,12 +41,14 @@ const Header = ({ roomId = "general", theme, setTheme }) => {
         </button>
       </div>
 
-      <div className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`} />
+      <div
+        className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`}
+      />
 
       {/* 2. Theme Toggle */}
       <button
         type="button"
-        onClick={toggleTheme}
+        onClick={handleToggleTheme}
         className={`${styles.iconButton} ${isDark ? styles.iconButtonDark : ""}`}
         title={`Switch to ${isDark ? "Light" : "Dark"} board`}
         aria-label="Toggle theme"
@@ -58,7 +56,9 @@ const Header = ({ roomId = "general", theme, setTheme }) => {
         {isDark ? <Sun size={16} /> : <Moon size={16} />}
       </button>
 
-      <div className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`} />
+      <div
+        className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`}
+      />
 
       {/* 3. User Profile & Logout */}
       {user && (

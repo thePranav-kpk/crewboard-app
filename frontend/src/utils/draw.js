@@ -2,12 +2,17 @@
 // stroke -> JS object representing a stroke
 
 // Take a 2D Canvas context and paint a stroke object
-const renderStroke = (ctx, stroke) => {
+const renderStroke = (ctx, stroke, theme) => {
   if (!stroke.points || stroke.points.length === 0) return;
 
   // Start a new path
   ctx.beginPath();
-  ctx.strokeStyle = stroke.color || "#000000";
+  ctx.strokeStyle =
+    theme === "dark" && stroke.color === "#1e1e1e"
+      ? "#ffffff"
+      : theme === "light" && stroke.color === "#ffffff"
+        ? "#1e1e1e"
+        : stroke.color;
   ctx.lineWidth = stroke.size || 4;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";

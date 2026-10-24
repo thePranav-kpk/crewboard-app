@@ -45,7 +45,7 @@ const Whiteboard = () => {
 
   const [color, setColor] = useState(() => {
     const savedColor = localStorage.getItem("color");
-    return savedColor ? savedColor : "#000000";
+    return savedColor ? savedColor : "#1e1e1e";
   });
 
   const [size, setSize] = useState(() => {
@@ -174,7 +174,8 @@ const Whiteboard = () => {
     ctx.scale(zoom, zoom);
 
     // Redraw all the elements
-    elements.forEach((stroke) => renderStroke(ctx, stroke));
+    // Pass theme to switch the stroke colors if same theme and similar color
+    elements.forEach((stroke) => renderStroke(ctx, stroke, theme));
 
     // Draw highlighted box around selected strokes
     if (selectedIds.length > 0) {
@@ -224,15 +225,26 @@ const Whiteboard = () => {
     }
 
     if (isDrawing && currentPoints.current.length > 0) {
-      renderStroke(ctx, {
-        points: currentPoints.current,
-        color,
-        size,
-      });
+      renderStroke(
+        ctx,
+        {
+          points: currentPoints.current,
+          color,
+          size,
+        },
+        theme,
+      );
     }
 
     ctx.restore();
-  }, [elements, pan, zoom, isDrawing, selectedIds, selectionBox]);
+  }, [elements, pan, zoom, isDrawing, selectedIds, selectionBox, theme]);
+
+  const handleToggleTheme = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    if (color === "#ffffff" && nextTheme === "light") setColor("#1e1e1e");
+    if (color === "#1e1e1e" && nextTheme === "dark") setColor("#ffffff");
+  };
 
   // Calculate the world point
   const getWorldPoint = (e) => {
@@ -389,7 +401,7 @@ const Whiteboard = () => {
       ctx.translate(pan.x, pan.y);
       ctx.scale(zoom, zoom);
 
-      renderStroke(ctx, { points: currentPoints.current, color, size });
+      renderStroke(ctx, { points: currentPoints.current, color, size }, theme);
 
       ctx.restore();
     }
@@ -464,7 +476,11 @@ const Whiteboard = () => {
       />
 
       {/* Render the header */}
-      <Header roomId={"general"} theme={theme} setTheme={setTheme} />
+      <Header
+        roomId={"general"}
+        theme={theme}
+        handleToggleTheme={handleToggleTheme}
+      />
 
       {/* Render peer cursors */}
       <PeerCursors peerCursors={peerCursors} pan={pan} zoom={zoom} />
@@ -477,6 +493,7 @@ const Whiteboard = () => {
         setColor={setColor}
         size={size}
         setSize={setSize}
+        theme={theme}
       />
 
       {/* Render the zoom controls */}

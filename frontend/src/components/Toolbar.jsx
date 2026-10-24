@@ -26,7 +26,7 @@ const TOOLS = [
 
 const Divider = () => <div className={styles.divider} />;
 
-const Toolbar = ({ tool, setTool, color, setColor, size, setSize }) => {
+const Toolbar = ({ tool, setTool, color, setColor, size, setSize, theme }) => {
   const isColorDisabled = tool !== "pen";
   const isSizeDisabled = tool !== "pen";
 
@@ -57,6 +57,12 @@ const Toolbar = ({ tool, setTool, color, setColor, size, setSize }) => {
         className={`${styles.colorSection} ${isColorDisabled ? styles.disabledSection : ""}`}
       >
         {COLORS.map((c) => {
+          // Skip the color matching the theme
+          if (
+            (c.name === "Charcoal" && theme === "dark") ||
+            (c.name === "White" && theme === "light")
+          )
+            return null;
           const isSelected = color === c.hex && tool === "pen";
           return (
             <button
