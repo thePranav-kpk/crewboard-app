@@ -480,6 +480,7 @@ const Whiteboard = () => {
         roomId={"general"}
         theme={theme}
         handleToggleTheme={handleToggleTheme}
+        elements={elements}
       />
 
       {/* Render peer cursors */}

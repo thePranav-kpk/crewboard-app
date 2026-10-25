@@ -114,6 +114,16 @@
   color: #fafafa;
 }
 
+.iconButtonActive {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.iconButtonActiveDark {
+  background-color: #27272a;
+  color: #fafafa;
+}
+
 .userSection {
   display: flex;
   align-items: center;
