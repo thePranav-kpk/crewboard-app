@@ -12,6 +12,7 @@ import {
 } from "../utils/hitTest.js";
 import useSocket from "../hooks/useSocket.js";
 import useHistory from "../hooks/useHistory.js";
+import useSelection from "../hooks/useSelection.js";
 import Toolbar from "./Toolbar.jsx";
 import PeerCursors from "./PeerCursors.jsx";
 import ZoomControls from "./ZoomControls.jsx";
@@ -21,15 +22,6 @@ import styles from "./Whiteboard.module.css";
 const Whiteboard = () => {
   // Reference to Canvas DOM element
   const canvasRef = useRef(null);
-
-  // Ref to check if dragging selected strokes
-  const isDraggingSelectionRef = useRef(null);
-
-  // Ref to store last dragged position
-  const dragLastPosRef = useRef(null);
-
-  // Ref to store position where dragging began
-  const dragFirstPosRef = useRef(null);
 
   // Ref to store last timestamp when cursor changed
   const lastCursorEmitRef = useRef(0);
@@ -56,10 +48,6 @@ const Whiteboard = () => {
     const savedSize = localStorage.getItem("size");
     return savedSize ? parseInt(savedSize) : 4;
   });
-
-  // Store ids for selecting box
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [selectionBox, setSelectionBox] = useState(null);
 
   // Lazy initial state
   const [theme, setTheme] = useState(() => {
@@ -136,6 +124,23 @@ const Whiteboard = () => {
     emitStroke,
     emitDelete,
     emitUpdate,
+  });
+
+  const {
+    selectedIds,
+    setSelectedIds,
+    selectionBox,
+    setSelectionBox,
+    handleSelectionPointerDown,
+    handleSelectionPointerMove,
+    handleSelectionPointerUp,
+  } = useSelection({
+    elements,
+    setElements,
+    zoom,
+    emitUpdate,
+    setUndoStack,
+    setRedoStack,
   });
 
   // Store theme in localStorage
@@ -311,29 +316,7 @@ const Whiteboard = () => {
     const worldPoint = getWorldPoint(e);
 
     if (tool === "select") {
-      const selectedStrokes = elements.filter((el) =>
-        selectedIds.includes(el.id),
-      );
-      const bounds = getGroupBounds(selectedStrokes);
-      const pad = 6 / zoom;
-
-      const isHitOnSelected =
-        bounds &&
-        worldPoint.x >= bounds.minX - pad &&
-        worldPoint.x <= bounds.maxX + pad &&
-        worldPoint.y >= bounds.minY - pad &&
-        worldPoint.y <= bounds.maxY + pad;
-
-      // Indicates dragging if hit on selected stroke
-      if (isHitOnSelected) {
-        isDraggingSelectionRef.current = true;
-        dragFirstPosRef.current = worldPoint;
-        dragLastPosRef.current = worldPoint;
-      } else {
-        // Indicates mouse pressed outside selected region, so remove the selected ids and start new selection
-        setSelectedIds([]);
-        setSelectionBox({ start: worldPoint, current: worldPoint });
-      }
+      handleSelectionPointerDown(worldPoint);
     }
 
     if (tool === "eraser") {
@@ -381,32 +364,7 @@ const Whiteboard = () => {
 
     if (tool === "select" && e.buttons === 1) {
       // Indicates dragging so every point changes its position evenly
-      if (isDraggingSelectionRef.current) {
-        const deltaX = worldPoint.x - dragLastPosRef.current.x;
-        const deltaY = worldPoint.y - dragLastPosRef.current.y;
-
-        setElements((prev) =>
-          prev.map((stroke) => {
-            if (selectedIds.includes(stroke.id)) {
-              return {
-                ...stroke,
-                points: stroke.points.map((point) => ({
-                  x: point.x + deltaX,
-                  y: point.y + deltaY,
-                })),
-              };
-            }
-            return stroke;
-          }),
-        );
-
-        dragLastPosRef.current = worldPoint;
-      } else {
-        // Indicates selecting box
-        setSelectionBox((prev) =>
-          prev ? { ...prev, current: worldPoint } : null,
-        );
-      }
+      handleSelectionPointerMove(worldPoint);
     }
 
     if (tool === "eraser" && e.buttons === 1) {
@@ -462,51 +420,8 @@ const Whiteboard = () => {
 
     if (tool === "select") {
       // Indicates dragging completed
-      if (isDraggingSelectionRef.current) {
-        const worldPoint = getWorldPoint(e);
-
-        // Calculate displacement
-        const dx = worldPoint.x - dragFirstPosRef.current.x;
-        const dy = worldPoint.y - dragFirstPosRef.current.y;
-
-        // Add the action to undo stack
-        if (Math.hypot(dx, dy) > 1) {
-          setUndoStack((prev) => [
-            ...prev,
-            {
-              type: "move",
-              strokeIds: [...selectedIds],
-              dx,
-              dy,
-            },
-          ]);
-          setRedoStack([]);
-        }
-
-        isDraggingSelectionRef.current = false;
-        dragLastPosRef.current = null;
-        dragFirstPosRef.current = null;
-
-        const updatedElements = elements.filter((stroke) =>
-          selectedIds.includes(stroke.id),
-        );
-        emitUpdate(updatedElements);
-      } else {
-        // Indicates selection completed
-        if (selectionBox) {
-          // Find strokes intersecting the selection box
-          const strokes = elements.filter((stroke) =>
-            isStrokeInBox(stroke, selectionBox.start, selectionBox.current),
-          );
-
-          // Store selected ids
-          const ids = strokes.map((stroke) => stroke.id);
-          setSelectedIds(ids);
-
-          // Remove selection box
-          setSelectionBox(null);
-        }
-      }
+      const worldPoint = getWorldPoint(e);
+      handleSelectionPointerUp(worldPoint);
     }
 
     if (isPanning) {
