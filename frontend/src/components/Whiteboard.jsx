@@ -2,12 +2,12 @@
 import { useRef, useState, useEffect } from "react";
 import usePanZoom from "../hooks/usePanZoom.js";
 import { screenToWorld } from "../utils/coordinates.js";
-import { isStrokeHit } from "../utils/hitTest.js";
 import useSocket from "../hooks/useSocket.js";
 import useHistory from "../hooks/useHistory.js";
 import useSelection from "../hooks/useSelection.js";
 import useCanvasRender from "../hooks/useCanvasRender.js";
 import usePen from "../hooks/usePen.js";
+import useEraser from "../hooks/useEraser.js";
 import Toolbar from "./Toolbar.jsx";
 import PeerCursors from "./PeerCursors.jsx";
 import ZoomControls from "./ZoomControls.jsx";
@@ -46,9 +46,6 @@ const Whiteboard = () => {
     const savedTheme = localStorage.getItem("theme");
     return savedTheme ? savedTheme : "light";
   });
-
-  // Ref to all strokes erased in one gesture (swipe)
-  const erasedInCurrentGestureRef = useRef([]);
 
   const {
     pan,
@@ -154,6 +151,18 @@ const Whiteboard = () => {
     emitStroke,
   });
 
+  const {
+    handleEraserPointerDown,
+    handleEraserPointerMove,
+    handleEraserPointerUp,
+  } = useEraser({
+    elements,
+    setElements,
+    setUndoStack,
+    setRedoStack,
+    emitDelete,
+  });
+
   // Store theme in localStorage
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -204,30 +213,6 @@ const Whiteboard = () => {
     );
   };
 
-  // To erase stroke
-  const eraseStrokeAt = (worldPoint) => {
-    // Find the first stroke that intersects the eraser cursor
-    const hitStroke = elements.find((stroke) =>
-      isStrokeHit(stroke, worldPoint),
-    );
-
-    if (hitStroke) {
-      // Add to array storing current erased strokes in one gesture
-      if (
-        !erasedInCurrentGestureRef.current.some(
-          (stroke) => stroke.id === hitStroke.id,
-        )
-      )
-        erasedInCurrentGestureRef.current.push(hitStroke);
-
-      // Delete the stroke from canvas state
-      emitDelete(hitStroke.id);
-      setElements((prev) =>
-        prev.filter((stroke) => stroke.id !== hitStroke.id),
-      );
-    }
-  };
-
   // Mouse held down for drawing
   const handlePointerDown = (e) => {
     // Get eraser coordinates
@@ -238,10 +223,7 @@ const Whiteboard = () => {
     }
 
     if (tool === "eraser") {
-      // Collect all strokes erased in this gesture
-      erasedInCurrentGestureRef.current = [];
-
-      eraseStrokeAt(worldPoint);
+      handleEraserPointerDown(worldPoint);
     }
 
     // Check if mouse middle button (wheel click) pressed for dragging Canvas
@@ -272,7 +254,7 @@ const Whiteboard = () => {
     }
 
     if (tool === "eraser" && e.buttons === 1) {
-      eraseStrokeAt(worldPoint);
+      handleEraserPointerMove(worldPoint);
     }
 
     if (isPanning) {
@@ -285,19 +267,7 @@ const Whiteboard = () => {
   // Mouse released (held up)
   const handlePointerUp = (e) => {
     if (tool === "eraser") {
-      if (erasedInCurrentGestureRef.current.length > 0) {
-        const strokesToSave = [...erasedInCurrentGestureRef.current];
-
-        // Add the action to undo stack and clear redo stack
-        setUndoStack((prev) => [
-          ...prev,
-          { type: "erase", strokes: strokesToSave },
-        ]);
-        setRedoStack([]);
-
-        // Reset to collect new strokes erased in next gesture
-        erasedInCurrentGestureRef.current = [];
-      }
+      handleEraserPointerUp();
     }
 
     if (tool === "select") {
