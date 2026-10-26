@@ -2,12 +2,12 @@
 import { useRef, useState, useEffect } from "react";
 import usePanZoom from "../hooks/usePanZoom.js";
 import { screenToWorld } from "../utils/coordinates.js";
-import { renderStroke } from "../utils/draw.js";
 import { isStrokeHit } from "../utils/hitTest.js";
 import useSocket from "../hooks/useSocket.js";
 import useHistory from "../hooks/useHistory.js";
 import useSelection from "../hooks/useSelection.js";
 import useCanvasRender from "../hooks/useCanvasRender.js";
+import usePen from "../hooks/usePen.js";
 import Toolbar from "./Toolbar.jsx";
 import PeerCursors from "./PeerCursors.jsx";
 import ZoomControls from "./ZoomControls.jsx";
@@ -23,9 +23,6 @@ const Whiteboard = () => {
 
   // Array of all finished strokes
   const [elements, setElements] = useState([]);
-
-  const [isDrawing, setIsDrawing] = useState(false);
-  const currentPoints = useRef([]);
 
   // Store all current drawing options
   // Lazy initial state
@@ -138,6 +135,25 @@ const Whiteboard = () => {
     setRedoStack,
   });
 
+  const {
+    isDrawing,
+    currentPoints,
+    handlePenPointerDown,
+    handlePenPointerMove,
+    handlePenPointerUp,
+  } = usePen({
+    canvasRef,
+    color,
+    size,
+    theme,
+    pan,
+    zoom,
+    setElements,
+    setUndoStack,
+    setRedoStack,
+    emitStroke,
+  });
+
   // Store theme in localStorage
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -177,7 +193,10 @@ const Whiteboard = () => {
   const getWorldPoint = (e) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
+
     const rect = canvas.getBoundingClientRect();
+
+    // Calculate the coordinates relative to top-left corner of Canvas
     return screenToWorld(
       { x: e.clientX - rect.left, y: e.clientY - rect.top },
       pan,
@@ -232,21 +251,7 @@ const Whiteboard = () => {
 
     // Only pen can draw
     if (tool === "pen") {
-      setIsDrawing(true);
-
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const rect = canvas.getBoundingClientRect();
-
-      // Calculate the coordinates relative to top-left corner of Canvas
-      const screenX = e.clientX - rect.left;
-      const screenY = e.clientY - rect.top;
-
-      const worldPoint = screenToWorld({ x: screenX, y: screenY }, pan, zoom);
-
-      // Set the first point to start a stroke
-      currentPoints.current = [worldPoint];
+      handlePenPointerDown(worldPoint);
     }
   };
 
@@ -273,29 +278,7 @@ const Whiteboard = () => {
     if (isPanning) {
       updatePan(e.clientX, e.clientY);
     } else if (isDrawing) {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const rect = canvas.getBoundingClientRect();
-
-      const screenX = e.clientX - rect.left;
-      const screenY = e.clientY - rect.top;
-
-      const worldPoint = screenToWorld({ x: screenX, y: screenY }, pan, zoom);
-
-      // Add to the current points
-      currentPoints.current.push(worldPoint);
-
-      // Paint the active line (collection of current points)
-      const ctx = canvas.getContext("2d");
-
-      ctx.save();
-      ctx.translate(pan.x, pan.y);
-      ctx.scale(zoom, zoom);
-
-      renderStroke(ctx, { points: currentPoints.current, color, size }, theme);
-
-      ctx.restore();
+      handlePenPointerMove(worldPoint);
     }
   };
 
@@ -326,31 +309,7 @@ const Whiteboard = () => {
     if (isPanning) {
       stopPanning();
     } else if (isDrawing) {
-      setIsDrawing(false);
-
-      // Store the current points
-      const pointsToSave = [...currentPoints.current];
-      currentPoints.current = [];
-
-      if (pointsToSave.length > 0) {
-        const newStroke = {
-          id: crypto.randomUUID(),
-          type: "stroke",
-          points: pointsToSave,
-          color,
-          size,
-        };
-
-        // Add the action to undo stack and clear redo stack
-        setUndoStack((prev) => [...prev, { type: "add", stroke: newStroke }]);
-        setRedoStack([]);
-
-        // Broadcast the new stroke to peers
-        emitStroke(newStroke);
-
-        // Trigger redraw loop to persist stroke on Canvas board
-        setElements((prev) => [...prev, newStroke]);
-      }
+      handlePenPointerUp();
     }
   };
 
