@@ -67,6 +67,9 @@ const Whiteboard = () => {
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
 
+  // Ref to all strokes erased in one gesture (swipe)
+  const erasedInCurrentGestureRef = useRef([]);
+
   const {
     pan,
     zoom,
@@ -270,6 +273,14 @@ const Whiteboard = () => {
     );
 
     if (hitStroke) {
+      // Add to array storing current erased strokes in one gesture
+      if (
+        !erasedInCurrentGestureRef.current.some(
+          (stroke) => stroke.id === hitStroke.id,
+        )
+      )
+        erasedInCurrentGestureRef.current.push(hitStroke);
+
       // Delete the stroke from canvas state
       emitDelete(hitStroke.id);
       setElements((prev) =>
@@ -309,6 +320,9 @@ const Whiteboard = () => {
     }
 
     if (tool === "eraser") {
+      // Collect all strokes erased in this gesture
+      erasedInCurrentGestureRef.current = [];
+
       eraseStrokeAt(worldPoint);
     }
 
@@ -413,6 +427,22 @@ const Whiteboard = () => {
 
   // Mouse released (held up)
   const handlePointerUp = (e) => {
+    if (tool === "eraser") {
+      if (erasedInCurrentGestureRef.current.length > 0) {
+        const strokesToSave = [...erasedInCurrentGestureRef.current];
+
+        // Add the action to undo stack and clear redo stack
+        setUndoStack((prev) => [
+          ...prev,
+          { type: "erase", strokes: strokesToSave },
+        ]);
+        setRedoStack([]);
+
+        // Reset to collect new strokes erased in next gesture
+        erasedInCurrentGestureRef.current = [];
+      }
+    }
+
     if (tool === "select") {
       // Indicates dragging completed
       if (isDraggingSelectionRef.current) {
@@ -491,6 +521,15 @@ const Whiteboard = () => {
 
       // Add to redo stack
       setRedoStack((prev) => [...prev, action]);
+    } else if (action.type === "erase") {
+      // Add the erased strokes back to canvas
+      setElements((prev) => [...prev, ...action.strokes]);
+
+      // Broadcast to peers
+      action.strokes.forEach((stroke) => emitStroke(stroke));
+
+      // Add to redo stack
+      setRedoStack((prev) => [...prev, action]);
     }
   };
 
@@ -508,6 +547,19 @@ const Whiteboard = () => {
 
       // Broadcast to peers
       emitStroke(action.stroke);
+
+      // Add to undo stack
+      setUndoStack((prev) => [...prev, action]);
+    } else if (action.type === "erase") {
+      const erasedIds = action.strokes.map((stroke) => stroke.id);
+
+      // Remove the strokes from canvas
+      setElements((prev) =>
+        prev.filter((element) => !erasedIds.includes(element.id)),
+      );
+
+      // Broadcast to peers
+      action.strokes.forEach((stroke) => emitDelete(stroke.id));
 
       // Add to undo stack
       setUndoStack((prev) => [...prev, action]);
