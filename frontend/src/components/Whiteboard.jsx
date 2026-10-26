@@ -23,6 +23,7 @@ const Whiteboard = () => {
 
   // Array of all finished strokes
   const [elements, setElements] = useState([]);
+  const elementsRef = useRef(elements);
 
   // Store all current drawing options
   // Lazy initial state
@@ -109,6 +110,7 @@ const Whiteboard = () => {
     canUndo,
     canRedo,
   } = useHistory({
+    elementsRef,
     setElements,
     emitStroke,
     emitDelete,
@@ -162,6 +164,10 @@ const Whiteboard = () => {
     setRedoStack,
     emitDelete,
   });
+
+  useEffect(() => {
+    elementsRef.current = elements;
+  }, [elements]);
 
   // Store theme in localStorage
   useEffect(() => {

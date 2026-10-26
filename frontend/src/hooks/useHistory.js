@@ -1,7 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 
-const useHistory = ({ setElements, emitStroke, emitDelete, emitUpdate }) => {
+const useHistory = ({
+  elementsRef,
+  setElements,
+  emitStroke,
+  emitDelete,
+  emitUpdate,
+}) => {
   // Store actions for undo and redo shortcuts and buttons
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
@@ -37,22 +43,22 @@ const useHistory = ({ setElements, emitStroke, emitDelete, emitUpdate }) => {
     } else if (action.type === "move") {
       // Move the strokes back to original position
       const updatedElements = [];
-      setElements((prev) =>
-        prev.map((stroke) => {
-          if (action.strokeIds.includes(stroke.id)) {
-            const movedStroke = {
-              ...stroke,
-              points: stroke.points.map((point) => ({
-                x: point.x - action.dx,
-                y: point.y - action.dy,
-              })),
-            };
-            updatedElements.push(movedStroke);
-            return movedStroke;
-          }
-          return stroke;
-        }),
-      );
+      const nextElements = elementsRef.current.map((stroke) => {
+        if (action.strokeIds.includes(stroke.id)) {
+          const movedStroke = {
+            ...stroke,
+            points: stroke.points.map((point) => ({
+              x: point.x - action.dx,
+              y: point.y - action.dy,
+            })),
+          };
+          updatedElements.push(movedStroke);
+          return movedStroke;
+        }
+        return stroke;
+      });
+      elementsRef.current = nextElements;
+      setElements(nextElements);
 
       // Broadcast to peers
       emitUpdate(updatedElements);
@@ -95,22 +101,22 @@ const useHistory = ({ setElements, emitStroke, emitDelete, emitUpdate }) => {
     } else if (action.type === "move") {
       // Move the strokes back to original position
       const updatedElements = [];
-      setElements((prev) =>
-        prev.map((stroke) => {
-          if (action.strokeIds.includes(stroke.id)) {
-            const movedStroke = {
-              ...stroke,
-              points: stroke.points.map((point) => ({
-                x: point.x + action.dx,
-                y: point.y + action.dy,
-              })),
-            };
-            updatedElements.push(movedStroke);
-            return movedStroke;
-          }
-          return stroke;
-        }),
-      );
+      const nextElements = elementsRef.current.map((stroke) => {
+        if (action.strokeIds.includes(stroke.id)) {
+          const movedStroke = {
+            ...stroke,
+            points: stroke.points.map((point) => ({
+              x: point.x + action.dx,
+              y: point.y + action.dy,
+            })),
+          };
+          updatedElements.push(movedStroke);
+          return movedStroke;
+        }
+        return stroke;
+      });
+      elementsRef.current = nextElements;
+      setElements(nextElements);
 
       // Broadcast to peers
       emitUpdate(updatedElements);
