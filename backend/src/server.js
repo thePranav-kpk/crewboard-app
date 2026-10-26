@@ -32,7 +32,7 @@ io.use(socketAuth);
 
 // Listen for connections
 io.on("connection", (socket) => {
-  console.log(`User conencted: ${socket.user.name}(${socket.id})`);
+  console.log(`User connected: ${socket.user.name}(${socket.id})`);
   registerBoardHandlers(io, socket);
 });
 // Allow client url to make requests
