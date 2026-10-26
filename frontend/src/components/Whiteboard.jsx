@@ -63,6 +63,10 @@ const Whiteboard = () => {
     return savedTheme ? savedTheme : "light";
   });
 
+  // Store actions for undo and redo shortcuts and buttons
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
+
   const {
     pan,
     zoom,
@@ -454,6 +458,11 @@ const Whiteboard = () => {
           color,
           size,
         };
+
+        // Add the action to undo stack and clear redo stack
+        setUndoStack((prev) => [...prev, { type: "add", stroke: newStroke }]);
+        setRedoStack([]);
+
         // Broadcast the new stroke to peers
         emitStroke(newStroke);
 
@@ -462,6 +471,79 @@ const Whiteboard = () => {
       }
     }
   };
+
+  const handleUndo = () => {
+    if (undoStack.length === 0) return;
+
+    const action = undoStack[undoStack.length - 1];
+
+    // Remove from undo stack
+    setUndoStack((prev) => prev.slice(0, -1));
+
+    if (action.type === "add") {
+      // Remove the added stroke from canvas
+      setElements((prev) =>
+        prev.filter((stroke) => stroke.id !== action.stroke.id),
+      );
+
+      // Broadcast to peers
+      emitDelete(action.stroke.id);
+
+      // Add to redo stack
+      setRedoStack((prev) => [...prev, action]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length === 0) return;
+
+    const action = redoStack[redoStack.length - 1];
+
+    // Remove from redo stack
+    setRedoStack((prev) => prev.slice(0, -1));
+
+    if (action.type === "add") {
+      // Add the stroke back to canvas
+      setElements((prev) => [...prev, action.stroke]);
+
+      // Broadcast to peers
+      emitStroke(action.stroke);
+
+      // Add to undo stack
+      setUndoStack((prev) => [...prev, action]);
+    }
+  };
+
+  // Handle undo and redo using keys
+  useEffect(() => {
+    const handleKeydown = (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+        return;
+
+      // Ctrl-> Windows, Cmd-> Mac
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+      if (!isCtrlOrCmd) return;
+
+      // Ctrl + Z -> Mac and Windows
+      if (!e.shiftKey && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        handleUndo();
+      }
+
+      // Ctrl + Shift + Z -> Mac
+      // Ctrl + Y -> Windows
+      if (
+        e.key.toLowerCase() === "y" ||
+        (e.shiftKey && e.key.toLowerCase() === "z")
+      ) {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+    window.addEventListener("keydown", handleKeydown);
+
+    return () => window.removeEventListener("keydown", handleKeydown);
+  }, [undoStack, redoStack]);
 
   return (
     <div
@@ -495,6 +577,10 @@ const Whiteboard = () => {
         size={size}
         setSize={setSize}
         theme={theme}
+        handleUndo={handleUndo}
+        handleRedo={handleRedo}
+        canUndo={undoStack.length > 0}
+        canRedo={redoStack.length > 0}
       />
 
       {/* Render the zoom controls */}

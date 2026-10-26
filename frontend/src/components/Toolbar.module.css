@@ -58,6 +58,12 @@
   color: #f4f4f5;
 }
 
+.toolButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .toolButtonActive {
   background-color: #1e1e1e;
   color: #ffffff;

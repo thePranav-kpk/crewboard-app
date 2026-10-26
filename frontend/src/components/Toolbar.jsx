@@ -1,4 +1,4 @@
-import { Pencil, Eraser, Wand2, Hand } from "lucide-react";
+import { Pencil, Eraser, Wand2, Hand, Undo2, Redo2 } from "lucide-react";
 import styles from "./Toolbar.module.css";
 
 const COLORS = [
@@ -28,7 +28,19 @@ const Divider = ({ isDark }) => (
   <div className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`} />
 );
 
-const Toolbar = ({ tool, setTool, color, setColor, size, setSize, theme }) => {
+const Toolbar = ({
+  tool,
+  setTool,
+  color,
+  setColor,
+  size,
+  setSize,
+  theme,
+  handleUndo,
+  handleRedo,
+  canUndo,
+  canRedo,
+}) => {
   const isDark = theme === "dark";
   const isColorDisabled = tool !== "pen";
   const isSizeDisabled = tool !== "pen";
@@ -57,6 +69,32 @@ const Toolbar = ({ tool, setTool, color, setColor, size, setSize, theme }) => {
             </button>
           );
         })}
+      </div>
+
+      <Divider isDark={isDark} />
+
+      {/* Undo and Redo */}
+      <div className={styles.toolSection}>
+        <button
+          type="button"
+          disabled={!canUndo}
+          onClick={handleUndo}
+          title="Undo (Ctrl+Z)"
+          aria-label="Undo"
+          className={`${styles.toolButton} ${isDark ? styles.toolButtonDark : ""}`}
+        >
+          <Undo2 size={18} strokeWidth={2} />
+        </button>
+        <button
+          type="button"
+          disabled={!canRedo}
+          onClick={handleRedo}
+          title="Redo (Ctrl+Y)"
+          aria-label="Redo"
+          className={`${styles.toolButton} ${isDark ? styles.toolButtonDark : ""}`}
+        >
+          <Redo2 size={18} strokeWidth={2} />
+        </button>
       </div>
 
       <Divider isDark={isDark} />
