@@ -27,6 +27,9 @@ const Whiteboard = () => {
   // Ref to store last dragged position
   const dragLastPosRef = useRef(null);
 
+  // Ref to store position where dragging began
+  const dragFirstPosRef = useRef(null);
+
   // Ref to store last timestamp when cursor changed
   const lastCursorEmitRef = useRef(0);
 
@@ -311,6 +314,7 @@ const Whiteboard = () => {
       // Indicates dragging if hit on selected stroke
       if (isHitOnSelected) {
         isDraggingSelectionRef.current = true;
+        dragFirstPosRef.current = worldPoint;
         dragLastPosRef.current = worldPoint;
       } else {
         // Indicates mouse pressed outside selected region, so remove the selected ids and start new selection
@@ -446,8 +450,29 @@ const Whiteboard = () => {
     if (tool === "select") {
       // Indicates dragging completed
       if (isDraggingSelectionRef.current) {
+        const worldPoint = getWorldPoint(e);
+
+        // Calculate displacement
+        const dx = worldPoint.x - dragFirstPosRef.current.x;
+        const dy = worldPoint.y - dragFirstPosRef.current.y;
+
+        // Add the action to undo stack
+        if (Math.hypot(dx, dy) > 1) {
+          setUndoStack((prev) => [
+            ...prev,
+            {
+              type: "move",
+              strokeIds: [...selectedIds],
+              dx,
+              dy,
+            },
+          ]);
+          setRedoStack([]);
+        }
+
         isDraggingSelectionRef.current = false;
         dragLastPosRef.current = null;
+        dragFirstPosRef.current = null;
 
         const updatedElements = elements.filter((stroke) =>
           selectedIds.includes(stroke.id),
@@ -530,6 +555,31 @@ const Whiteboard = () => {
 
       // Add to redo stack
       setRedoStack((prev) => [...prev, action]);
+    } else if (action.type === "move") {
+      // Move the strokes back to original position
+      const updatedElements = [];
+      setElements((prev) =>
+        prev.map((stroke) => {
+          if (action.strokeIds.includes(stroke.id)) {
+            const movedStroke = {
+              ...stroke,
+              points: stroke.points.map((point) => ({
+                x: point.x - action.dx,
+                y: point.y - action.dy,
+              })),
+            };
+            updatedElements.push(movedStroke);
+            return movedStroke;
+          }
+          return stroke;
+        }),
+      );
+
+      // Broadcast to peers
+      emitUpdate(updatedElements);
+
+      // Add to redo stack
+      setRedoStack((prev) => [...prev, action]);
     }
   };
 
@@ -560,6 +610,31 @@ const Whiteboard = () => {
 
       // Broadcast to peers
       action.strokes.forEach((stroke) => emitDelete(stroke.id));
+
+      // Add to undo stack
+      setUndoStack((prev) => [...prev, action]);
+    } else if (action.type === "move") {
+      // Move the strokes back to original position
+      const updatedElements = [];
+      setElements((prev) =>
+        prev.map((stroke) => {
+          if (action.strokeIds.includes(stroke.id)) {
+            const movedStroke = {
+              ...stroke,
+              points: stroke.points.map((point) => ({
+                x: point.x + action.dx,
+                y: point.y + action.dy,
+              })),
+            };
+            updatedElements.push(movedStroke);
+            return movedStroke;
+          }
+          return stroke;
+        }),
+      );
+
+      // Broadcast to peers
+      emitUpdate(updatedElements);
 
       // Add to undo stack
       setUndoStack((prev) => [...prev, action]);
