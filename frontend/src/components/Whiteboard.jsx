@@ -262,7 +262,7 @@ const Whiteboard = () => {
       handlePenPointerDown(worldPoint);
     }
 
-    if (tool === "rectangle" || tool === "circle") {
+    if (tool === "rectangle" || tool === "circle" || tool === "arrow") {
       handleShapePointerDown(worldPoint);
     }
   };
@@ -287,7 +287,10 @@ const Whiteboard = () => {
       handleEraserPointerMove(worldPoint);
     }
 
-    if ((tool === "rectangle" || tool === "circle") && e.buttons === 1) {
+    if (
+      (tool === "rectangle" || tool === "circle" || tool === "arrow") &&
+      e.buttons === 1
+    ) {
       handleShapePointerMove(worldPoint);
     }
 
@@ -313,7 +316,7 @@ const Whiteboard = () => {
       handleSelectionPointerUp(worldPoint);
     }
 
-    if (tool === "rectangle" || tool === "circle") {
+    if (tool === "rectangle" || tool === "circle" || tool === "arrow") {
       handleShapePointerUp(worldPoint);
     }
 

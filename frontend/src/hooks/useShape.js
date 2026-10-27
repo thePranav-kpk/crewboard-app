@@ -62,6 +62,18 @@ const useShape = ({
         color,
         size,
       });
+    } else if (tool === "arrow") {
+      setShapePreview({
+        type: "arrow",
+        startX: shapeStartRef.current.x,
+        startY: shapeStartRef.current.y,
+        endX: worldPoint.x,
+        endY: worldPoint.y,
+        width,
+        height,
+        color,
+        size,
+      });
     }
   };
 
@@ -92,6 +104,19 @@ const useShape = ({
           centerX: Math.min(worldPoint.x, shapeStartRef.current.x) + radius,
           centerY: Math.min(worldPoint.y, shapeStartRef.current.y) + radius,
           radius,
+          color,
+          size,
+        };
+      } else if (tool === "arrow") {
+        element = {
+          id: crypto.randomUUID(),
+          type: "arrow",
+          startX: shapeStartRef.current.x,
+          startY: shapeStartRef.current.y,
+          endX: worldPoint.x,
+          endY: worldPoint.y,
+          width,
+          height,
           color,
           size,
         };

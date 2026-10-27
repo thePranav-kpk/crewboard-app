@@ -78,6 +78,16 @@ const useSelection = ({
                 centerY: stroke.centerY + deltaY,
               };
             }
+          } else if (stroke.type === "arrow") {
+            if (selectedIds.includes(stroke.id)) {
+              return {
+                ...stroke,
+                startX: stroke.startX + deltaX,
+                startY: stroke.startY + deltaY,
+                endX: stroke.endX + deltaX,
+                endY: stroke.endY + deltaY,
+              };
+            }
           }
           return stroke;
         }),

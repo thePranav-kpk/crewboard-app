@@ -78,6 +78,18 @@ const useHistory = ({
 
             updatedElements.push(movedCircle);
             return movedCircle;
+          } else if (stroke.type === "arrow") {
+            // Moved arrow
+            const movedArrow = {
+              ...stroke,
+              startX: stroke.startX - action.dx,
+              startY: stroke.startY - action.dy,
+              endX: stroke.endX - action.dx,
+              endY: stroke.endY - action.dy,
+            };
+
+            updatedElements.push(movedArrow);
+            return movedArrow;
           }
         }
 
@@ -163,6 +175,18 @@ const useHistory = ({
 
             updatedElements.push(movedCircle);
             return movedCircle;
+          } else if (stroke.type === "arrow") {
+            // Moved arrow
+            const movedArrow = {
+              ...stroke,
+              startX: stroke.startX + action.dx,
+              startY: stroke.startY + action.dy,
+              endX: stroke.endX + action.dx,
+              endY: stroke.endY + action.dy,
+            };
+
+            updatedElements.push(movedArrow);
+            return movedArrow;
           }
         }
 

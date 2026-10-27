@@ -100,6 +100,15 @@ const isStrokeHit = (stroke, eraserPoint, eraserRadius = 8) => {
 
     // Check if absolute difference between distance and radius is within eraser radius threshold
     return Math.abs(distance - stroke.radius) <= threshold;
+  } else if (stroke.type === "arrow") {
+    // Check if distance of eraserPoint from arrow is within eraser radius threshold
+    return (
+      distanceToSegment(
+        eraserPoint,
+        { x: stroke.startX, y: stroke.startY },
+        { x: stroke.endX, y: stroke.endY },
+      ) <= threshold
+    );
   }
 
   return false;
@@ -150,6 +159,15 @@ const getStrokeBounds = (stroke) => {
       width: 2 * stroke.radius,
       height: 2 * stroke.radius,
     };
+  } else if (stroke.type === "arrow") {
+    return {
+      minX: Math.min(stroke.startX, stroke.endX),
+      maxX: Math.max(stroke.startX, stroke.endX),
+      minY: Math.min(stroke.startY, stroke.endY),
+      maxY: Math.max(stroke.startY, stroke.endY),
+      width: Math.abs(stroke.startX - stroke.endX),
+      height: Math.abs(stroke.startY - stroke.endY),
+    };
   }
 };
 
@@ -181,37 +199,34 @@ const getGroupBounds = (strokes) => {
 
 // Check if any point in a stroke lies inside the selected box
 const isStrokeInBox = (stroke, start, current) => {
+  // Edges of selection box
   const minX = Math.min(start.x, current.x);
   const maxX = Math.max(start.x, current.x);
 
   const minY = Math.min(start.y, current.y);
   const maxY = Math.max(start.y, current.y);
 
-  if (stroke.type === "stroke" || !stroke.type) {
-    for (const p of stroke.points) {
-      if (p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) return true;
-    }
-  }
-  // Works for all shapes
-  else {
-    // Edges of shape (Actually coordinates in 1D)
-    const {
-      minX: leftEdge,
-      maxX: rightEdge,
-      minY: topEdge,
-      maxY: bottomEdge,
-    } = getStrokeBounds(stroke);
+  // Handles even pen strokes
+  // Edges of shape (Actually coordinates in 1D)
+  const {
+    minX: leftEdge,
+    maxX: rightEdge,
+    minY: topEdge,
+    maxY: bottomEdge,
+  } = getStrokeBounds(stroke);
 
-    // Check for simultaneous intersection of X and Y axes of shape and selection box
-    return (
-      leftEdge <= maxX &&
-      minX <= rightEdge &&
-      topEdge <= maxY &&
-      minY <= bottomEdge
-    );
-  }
+  // Left edge of shape should be before right edge of selection box
+  // Left edge of selection box should be before right edge of shape
+  // Top edge of shape should be before bottom edge of selection box
+  // Top edge of selection box should be before bottom edge of shape
 
-  return false;
+  // Check for simultaneous intersection of X and Y axes of shape and selection box
+  return (
+    leftEdge <= maxX &&
+    minX <= rightEdge &&
+    topEdge <= maxY &&
+    minY <= bottomEdge
+  );
 };
 
 export {
