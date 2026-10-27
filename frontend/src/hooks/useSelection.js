@@ -70,6 +70,14 @@ const useSelection = ({
             if (selectedIds.includes(stroke.id)) {
               return { ...stroke, x: stroke.x + deltaX, y: stroke.y + deltaY };
             }
+          } else if (stroke.type === "circle") {
+            if (selectedIds.includes(stroke.id)) {
+              return {
+                ...stroke,
+                centerX: stroke.centerX + deltaX,
+                centerY: stroke.centerY + deltaY,
+              };
+            }
           }
           return stroke;
         }),

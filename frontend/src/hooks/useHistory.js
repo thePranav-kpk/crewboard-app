@@ -68,6 +68,16 @@ const useHistory = ({
 
             updatedElements.push(movedRectangle);
             return movedRectangle;
+          } else if (stroke.type === "circle") {
+            // Moved circle
+            const movedCircle = {
+              ...stroke,
+              centerX: stroke.centerX - action.dx,
+              centerY: stroke.centerY - action.dy,
+            };
+
+            updatedElements.push(movedCircle);
+            return movedCircle;
           }
         }
 
@@ -143,6 +153,16 @@ const useHistory = ({
 
             updatedElements.push(movedRectangle);
             return movedRectangle;
+          } else if (stroke.type === "circle") {
+            // Moved circle
+            const movedCircle = {
+              ...stroke,
+              centerX: stroke.centerX + action.dx,
+              centerY: stroke.centerY + action.dy,
+            };
+
+            updatedElements.push(movedCircle);
+            return movedCircle;
           }
         }
 

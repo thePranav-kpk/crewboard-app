@@ -48,6 +48,17 @@ const renderStroke = (ctx, stroke, theme) => {
 
     // Render a rectangle (Start from (x,y) and then add width, height to form rectangle)
     ctx.strokeRect(stroke.x, stroke.y, stroke.width, stroke.height);
+  } else if (stroke.type === "circle") {
+    // Start a new path
+    ctx.beginPath();
+    ctx.strokeStyle = getColor(stroke, theme);
+    ctx.lineWidth = getLineWidth(stroke);
+
+    // Render a full circle using center coordinates and radius
+    ctx.arc(stroke.centerX, stroke.centerY, stroke.radius, 0, 2 * Math.PI);
+
+    // Paint the stroke
+    ctx.stroke();
   }
 };
 

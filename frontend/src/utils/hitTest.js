@@ -33,10 +33,10 @@ const distanceToSegment = (point, a, b) => {
 };
 
 const isStrokeHit = (stroke, eraserPoint, eraserRadius = 8) => {
+  const threshold = eraserRadius + (stroke.size || 4) / 2;
+
   if (stroke.type === "stroke" || !stroke.type) {
     if (!stroke.points || stroke.points.length === 0) return false;
-
-    const threshold = eraserRadius + (stroke.size || 4) / 2;
 
     // Bounding box pre-check
     const { minX, maxX, minY, maxY } = getStrokeBounds(stroke);
@@ -78,8 +78,6 @@ const isStrokeHit = (stroke, eraserPoint, eraserRadius = 8) => {
     const br = { x: stroke.x + stroke.width, y: stroke.y + stroke.height };
     const bl = { x: stroke.x, y: stroke.y + stroke.height };
 
-    const threshold = eraserRadius + (stroke.size || 4) / 2;
-
     // Form edges of rectangle
     const topEdge = distanceToSegment(eraserPoint, tl, tr);
     const rightEdge = distanceToSegment(eraserPoint, tr, br);
@@ -93,6 +91,15 @@ const isStrokeHit = (stroke, eraserPoint, eraserRadius = 8) => {
       bottomEdge <= threshold ||
       leftEdge <= threshold
     );
+  } else if (stroke.type === "circle") {
+    // Distance between eraserPoint and center
+    const distance = Math.hypot(
+      stroke.centerX - eraserPoint.x,
+      stroke.centerY - eraserPoint.y,
+    );
+
+    // Check if absolute difference between distance and radius is within eraser radius threshold
+    return Math.abs(distance - stroke.radius) <= threshold;
   }
 
   return false;
@@ -133,6 +140,15 @@ const getStrokeBounds = (stroke) => {
       maxY: stroke.y + stroke.height,
       width: stroke.width,
       height: stroke.height,
+    };
+  } else if (stroke.type === "circle") {
+    return {
+      minX: stroke.centerX - stroke.radius,
+      maxX: stroke.centerX + stroke.radius,
+      minY: stroke.centerY - stroke.radius,
+      maxY: stroke.centerY + stroke.radius,
+      width: 2 * stroke.radius,
+      height: 2 * stroke.radius,
     };
   }
 };
@@ -175,14 +191,18 @@ const isStrokeInBox = (stroke, start, current) => {
     for (const p of stroke.points) {
       if (p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) return true;
     }
-  } else if (stroke.type === "rectangle") {
-    // Edges of rectangle (Actually coordinates in 1D)
-    const leftEdge = stroke.x;
-    const rightEdge = stroke.x + stroke.width;
-    const topEdge = stroke.y;
-    const bottomEdge = stroke.y + stroke.height;
+  }
+  // Works for all shapes
+  else {
+    // Edges of shape (Actually coordinates in 1D)
+    const {
+      minX: leftEdge,
+      maxX: rightEdge,
+      minY: topEdge,
+      maxY: bottomEdge,
+    } = getStrokeBounds(stroke);
 
-    // Check for simultaneous intersection of X and Y axes of rectangle and selection box
+    // Check for simultaneous intersection of X and Y axes of shape and selection box
     return (
       leftEdge <= maxX &&
       minX <= rightEdge &&

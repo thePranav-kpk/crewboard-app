@@ -174,6 +174,7 @@ const Whiteboard = () => {
     handleShapePointerMove,
     handleShapePointerUp,
   } = useShape({
+    tool,
     color,
     size,
     setElements,
@@ -261,7 +262,7 @@ const Whiteboard = () => {
       handlePenPointerDown(worldPoint);
     }
 
-    if (tool === "rectangle") {
+    if (tool === "rectangle" || tool === "circle") {
       handleShapePointerDown(worldPoint);
     }
   };
@@ -286,7 +287,7 @@ const Whiteboard = () => {
       handleEraserPointerMove(worldPoint);
     }
 
-    if (tool === "rectangle" && e.buttons === 1) {
+    if ((tool === "rectangle" || tool === "circle") && e.buttons === 1) {
       handleShapePointerMove(worldPoint);
     }
 
@@ -312,7 +313,7 @@ const Whiteboard = () => {
       handleSelectionPointerUp(worldPoint);
     }
 
-    if (tool === "rectangle") {
+    if (tool === "rectangle" || tool === "circle") {
       handleShapePointerUp(worldPoint);
     }
 

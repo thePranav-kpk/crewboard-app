@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 
 const useShape = ({
+  tool,
   color,
   size,
   setElements,
@@ -22,6 +23,10 @@ const useShape = ({
     return { width, height };
   };
 
+  const getRadius = (width, height) => {
+    return Math.max(width, height) / 2;
+  };
+
   const handleShapePointerDown = (worldPoint) => {
     setIsDrawingShape(true);
 
@@ -34,16 +39,30 @@ const useShape = ({
 
     const { width, height } = getWidthHeight(worldPoint);
 
-    // Store the (x,y) and width, height to form rectangle
-    setShapePreview({
-      type: "rectangle",
-      x: Math.min(worldPoint.x, shapeStartRef.current.x),
-      y: Math.min(worldPoint.y, shapeStartRef.current.y),
-      width,
-      height,
-      color,
-      size,
-    });
+    if (tool === "rectangle") {
+      // Store the (x,y) and width, height to form rectangle
+      setShapePreview({
+        type: "rectangle",
+        x: Math.min(worldPoint.x, shapeStartRef.current.x),
+        y: Math.min(worldPoint.y, shapeStartRef.current.y),
+        width,
+        height,
+        color,
+        size,
+      });
+    } else if (tool === "circle") {
+      const radius = getRadius(width, height);
+
+      setShapePreview({
+        type: "circle",
+        // Center coordinates-> (minX + radius,minY + radius)
+        centerX: Math.min(worldPoint.x, shapeStartRef.current.x) + radius,
+        centerY: Math.min(worldPoint.y, shapeStartRef.current.y) + radius,
+        radius,
+        color,
+        size,
+      });
+    }
   };
 
   const handleShapePointerUp = (worldPoint) => {
@@ -52,16 +71,31 @@ const useShape = ({
     const { width, height } = getWidthHeight(worldPoint);
 
     if (width > 0 || height > 0) {
-      const element = {
-        id: crypto.randomUUID(),
-        type: "rectangle",
-        x: Math.min(worldPoint.x, shapeStartRef.current.x),
-        y: Math.min(worldPoint.y, shapeStartRef.current.y),
-        width,
-        height,
-        color,
-        size,
-      };
+      let element = {};
+      if (tool === "rectangle") {
+        element = {
+          id: crypto.randomUUID(),
+          type: "rectangle",
+          x: Math.min(worldPoint.x, shapeStartRef.current.x),
+          y: Math.min(worldPoint.y, shapeStartRef.current.y),
+          width,
+          height,
+          color,
+          size,
+        };
+      } else if (tool === "circle") {
+        const radius = getRadius(width, height);
+
+        element = {
+          id: crypto.randomUUID(),
+          type: "circle",
+          centerX: Math.min(worldPoint.x, shapeStartRef.current.x) + radius,
+          centerY: Math.min(worldPoint.y, shapeStartRef.current.y) + radius,
+          radius,
+          color,
+          size,
+        };
+      }
 
       // Add the action to undo stack and clear redo stack
       setUndoStack((prev) => [...prev, { type: "add", stroke: element }]);
@@ -74,7 +108,7 @@ const useShape = ({
       setElements((prev) => [...prev, element]);
     }
 
-    setShapePreview({});
+    setShapePreview(null);
   };
 
   return {
