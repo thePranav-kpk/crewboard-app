@@ -41,22 +41,39 @@ const useHistory = ({
       // Add to redo stack
       setRedoStack((prev) => [...prev, action]);
     } else if (action.type === "move") {
-      // Move the strokes back to original position
+      // Move the strokes, rectangle back to original position
       const updatedElements = [];
+
       const nextElements = elementsRef.current.map((stroke) => {
         if (action.strokeIds.includes(stroke.id)) {
-          const movedStroke = {
-            ...stroke,
-            points: stroke.points.map((point) => ({
-              x: point.x - action.dx,
-              y: point.y - action.dy,
-            })),
-          };
-          updatedElements.push(movedStroke);
-          return movedStroke;
+          if (stroke.type === "stroke" || !stroke.type) {
+            // Moved stroke
+            const movedStroke = {
+              ...stroke,
+              points: stroke.points.map((point) => ({
+                x: point.x - action.dx,
+                y: point.y - action.dy,
+              })),
+            };
+
+            updatedElements.push(movedStroke);
+            return movedStroke;
+          } else if (stroke.type === "rectangle") {
+            // Moved rectangle
+            const movedRectangle = {
+              ...stroke,
+              x: stroke.x - action.dx,
+              y: stroke.y - action.dy,
+            };
+
+            updatedElements.push(movedRectangle);
+            return movedRectangle;
+          }
         }
+
         return stroke;
       });
+
       elementsRef.current = nextElements;
       setElements(nextElements);
 
@@ -99,22 +116,39 @@ const useHistory = ({
       // Add to undo stack
       setUndoStack((prev) => [...prev, action]);
     } else if (action.type === "move") {
-      // Move the strokes back to original position
+      // Move the strokes, rectangle back to original position
       const updatedElements = [];
+
       const nextElements = elementsRef.current.map((stroke) => {
         if (action.strokeIds.includes(stroke.id)) {
-          const movedStroke = {
-            ...stroke,
-            points: stroke.points.map((point) => ({
-              x: point.x + action.dx,
-              y: point.y + action.dy,
-            })),
-          };
-          updatedElements.push(movedStroke);
-          return movedStroke;
+          if (stroke.type === "stroke" || !stroke.type) {
+            // Moved stroke
+            const movedStroke = {
+              ...stroke,
+              points: stroke.points.map((point) => ({
+                x: point.x + action.dx,
+                y: point.y + action.dy,
+              })),
+            };
+
+            updatedElements.push(movedStroke);
+            return movedStroke;
+          } else if (stroke.type === "rectangle") {
+            // Moved rectangle
+            const movedRectangle = {
+              ...stroke,
+              x: stroke.x + action.dx,
+              y: stroke.y + action.dy,
+            };
+
+            updatedElements.push(movedRectangle);
+            return movedRectangle;
+          }
         }
+
         return stroke;
       });
+
       elementsRef.current = nextElements;
       setElements(nextElements);
 

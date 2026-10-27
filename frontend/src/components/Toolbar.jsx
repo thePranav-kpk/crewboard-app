@@ -42,8 +42,8 @@ const Toolbar = ({
   canRedo,
 }) => {
   const isDark = theme === "dark";
-  const isColorDisabled = tool !== "pen";
-  const isSizeDisabled = tool !== "pen";
+  const isColorDisabled = !["pen", "rectangle", "circle", "line", "arrow", "text"].includes(tool);
+  const isSizeDisabled = !["pen", "rectangle", "circle", "line", "arrow"].includes(tool);
 
   return (
     <div className={`${styles.toolbar} ${isDark ? styles.toolbarDark : ""}`}>
@@ -110,7 +110,7 @@ const Toolbar = ({
             (c.name === "White" && theme === "light")
           )
             return null;
-          const isSelected = color === c.hex && tool === "pen";
+          const isSelected = color === c.hex && !isColorDisabled;
           return (
             <button
               key={c.hex}
@@ -136,7 +136,7 @@ const Toolbar = ({
         className={`${styles.sizeSection} ${isSizeDisabled ? styles.disabledSection : ""}`}
       >
         {SIZES.map((s) => {
-          const isSelected = size === s.value && tool === "pen";
+          const isSelected = size === s.value && !isSizeDisabled;
           return (
             <button
               key={s.label}

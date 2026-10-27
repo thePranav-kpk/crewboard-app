@@ -8,10 +8,12 @@ import useSelection from "../hooks/useSelection.js";
 import useCanvasRender from "../hooks/useCanvasRender.js";
 import usePen from "../hooks/usePen.js";
 import useEraser from "../hooks/useEraser.js";
+import useShape from "../hooks/useShape.js";
 import Toolbar from "./Toolbar.jsx";
 import PeerCursors from "./PeerCursors.jsx";
 import ZoomControls from "./ZoomControls.jsx";
 import Header from "./Header.jsx";
+import Sidebar from "./Sidebar.jsx";
 import styles from "./Whiteboard.module.css";
 
 const Whiteboard = () => {
@@ -165,6 +167,21 @@ const Whiteboard = () => {
     emitDelete,
   });
 
+  const {
+    isDrawingShape,
+    shapePreview,
+    handleShapePointerDown,
+    handleShapePointerMove,
+    handleShapePointerUp,
+  } = useShape({
+    color,
+    size,
+    setElements,
+    emitStroke,
+    setUndoStack,
+    setRedoStack,
+  });
+
   useEffect(() => {
     elementsRef.current = elements;
   }, [elements]);
@@ -195,6 +212,8 @@ const Whiteboard = () => {
     color,
     size,
     handleWheel,
+    isDrawingShape,
+    shapePreview,
   });
 
   const handleToggleTheme = () => {
@@ -241,6 +260,10 @@ const Whiteboard = () => {
     if (tool === "pen") {
       handlePenPointerDown(worldPoint);
     }
+
+    if (tool === "rectangle") {
+      handleShapePointerDown(worldPoint);
+    }
   };
 
   // Mouse moving either for drawing or scrolling
@@ -263,6 +286,10 @@ const Whiteboard = () => {
       handleEraserPointerMove(worldPoint);
     }
 
+    if (tool === "rectangle" && e.buttons === 1) {
+      handleShapePointerMove(worldPoint);
+    }
+
     if (isPanning) {
       updatePan(e.clientX, e.clientY);
     } else if (isDrawing) {
@@ -272,6 +299,9 @@ const Whiteboard = () => {
 
   // Mouse released (held up)
   const handlePointerUp = (e) => {
+    // Get eraser coordinates
+    const worldPoint = getWorldPoint(e);
+
     if (tool === "eraser") {
       handleEraserPointerUp();
     }
@@ -280,6 +310,10 @@ const Whiteboard = () => {
       // Indicates dragging completed
       const worldPoint = getWorldPoint(e);
       handleSelectionPointerUp(worldPoint);
+    }
+
+    if (tool === "rectangle") {
+      handleShapePointerUp(worldPoint);
     }
 
     if (isPanning) {
@@ -326,6 +360,9 @@ const Whiteboard = () => {
         canUndo={canUndo}
         canRedo={canRedo}
       />
+
+      {/* Render the sidebar */}
+      <Sidebar tool={tool} setTool={setTool} theme={theme} />
 
       {/* Render the zoom controls */}
       <ZoomControls

@@ -50,19 +50,26 @@ const useSelection = ({
 
   const handleSelectionPointerMove = (worldPoint) => {
     if (isDraggingSelectionRef.current) {
+      // Physical and vertical distance
       const deltaX = worldPoint.x - dragLastPosRef.current.x;
       const deltaY = worldPoint.y - dragLastPosRef.current.y;
 
       setElements((prev) =>
         prev.map((stroke) => {
-          if (selectedIds.includes(stroke.id)) {
-            return {
-              ...stroke,
-              points: stroke.points.map((point) => ({
-                x: point.x + deltaX,
-                y: point.y + deltaY,
-              })),
-            };
+          if (stroke.type === "stroke" || !stroke.type) {
+            if (selectedIds.includes(stroke.id)) {
+              return {
+                ...stroke,
+                points: stroke.points.map((point) => ({
+                  x: point.x + deltaX,
+                  y: point.y + deltaY,
+                })),
+              };
+            }
+          } else if (stroke.type === "rectangle") {
+            if (selectedIds.includes(stroke.id)) {
+              return { ...stroke, x: stroke.x + deltaX, y: stroke.y + deltaY };
+            }
           }
           return stroke;
         }),

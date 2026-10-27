@@ -37,7 +37,11 @@ const usePen = ({
     ctx.translate(pan.x, pan.y);
     ctx.scale(zoom, zoom);
 
-    renderStroke(ctx, { points: currentPoints.current, color, size }, theme);
+    renderStroke(
+      ctx,
+      { type: "stroke", points: currentPoints.current, color, size },
+      theme,
+    );
 
     ctx.restore();
   };

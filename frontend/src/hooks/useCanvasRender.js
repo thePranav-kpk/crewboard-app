@@ -16,6 +16,8 @@ const useCanvasRender = ({
   color,
   size,
   handleWheel,
+  isDrawingShape,
+  shapePreview,
 }) => {
   // Zoom only the canvas
   useEffect(() => {
@@ -118,6 +120,7 @@ const useCanvasRender = ({
       renderStroke(
         ctx,
         {
+          type: "stroke",
           points: currentPoints.current,
           color,
           size,
@@ -126,8 +129,21 @@ const useCanvasRender = ({
       );
     }
 
+    if (isDrawingShape && shapePreview) {
+      renderStroke(ctx, shapePreview, theme);
+    }
+
     ctx.restore();
-  }, [elements, pan, zoom, isDrawing, selectedIds, selectionBox, theme]);
+  }, [
+    elements,
+    pan,
+    zoom,
+    isDrawing,
+    selectedIds,
+    selectionBox,
+    theme,
+    shapePreview,
+  ]);
 };
 
 export default useCanvasRender;
