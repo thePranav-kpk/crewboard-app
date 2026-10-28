@@ -76,26 +76,28 @@ const useCanvasRender = ({
 
     // Draw highlighted box around selected strokes
     if (selectedIds.length > 0) {
-      const selectedStrokes = elements.filter((s) =>
-        selectedIds.includes(s.id),
+      const selectedStrokes = elements.filter(
+        (s) => selectedIds.includes(s.id) && s.id !== editingTextId,
       );
-      const bounds = getGroupBounds(selectedStrokes);
+      if (selectedStrokes.length > 0) {
+        const bounds = getGroupBounds(selectedStrokes);
 
-      if (bounds) {
-        ctx.save();
-        ctx.strokeStyle = "#3b82f6";
-        ctx.lineWidth = 1.5 / zoom;
-        ctx.setLineDash([4 / zoom, 4 / zoom]);
+        if (bounds) {
+          ctx.save();
+          ctx.strokeStyle = "#3b82f6";
+          ctx.lineWidth = 1.5 / zoom;
+          ctx.setLineDash([4 / zoom, 4 / zoom]);
 
-        const pad = 6 / zoom;
-        ctx.strokeRect(
-          bounds.minX - pad,
-          bounds.minY - pad,
-          bounds.width + pad * 2,
-          bounds.height + pad * 2,
-        );
+          const pad = 6 / zoom;
+          ctx.strokeRect(
+            bounds.minX - pad,
+            bounds.minY - pad,
+            bounds.width + pad * 2,
+            bounds.height + pad * 2,
+          );
 
-        ctx.restore();
+          ctx.restore();
+        }
       }
     }
 

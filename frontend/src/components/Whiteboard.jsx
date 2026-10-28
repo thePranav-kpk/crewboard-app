@@ -196,11 +196,13 @@ const Whiteboard = () => {
   const {
     textInput,
     textareaRef,
+    handleTextPointerDown,
     handleTextPointerUp,
     handleTextDoubleClick,
     handleTextBlur,
     handleTextInput,
     handleTextKeyDown,
+    isDismissingText,
   } = useText({
     canvasRef,
     elements,
@@ -209,13 +211,13 @@ const Whiteboard = () => {
     zoom,
     color,
     size,
+    setSelectedIds,
+    setSelectionBox,
     emitStroke,
     emitUpdate,
     emitDelete,
     setUndoStack,
     setRedoStack,
-    handleUndo,
-    handleRedo,
   });
 
   // Remove the selection box if tool is not select
@@ -288,6 +290,12 @@ const Whiteboard = () => {
     // Get eraser coordinates
     const worldPoint = getWorldPoint(e);
 
+    // If text input is open, dismiss or switch text box but do not trigger tool actions
+    if (textInput) {
+      handleTextPointerDown(worldPoint);
+      return;
+    }
+
     if (tool === "select") {
       handleSelectionPointerDown(worldPoint);
     }
@@ -347,6 +355,12 @@ const Whiteboard = () => {
     // Get eraser coordinates
     const worldPoint = getWorldPoint(e);
 
+    // If dismissing an active text box, finish dismissal and ignore other tool actions
+    if (isDismissingText()) {
+      handleTextPointerUp(e, worldPoint);
+      return;
+    }
+
     if (tool === "eraser") {
       handleEraserPointerUp();
     }
@@ -374,8 +388,15 @@ const Whiteboard = () => {
 
   // Double click to edit text box
   const handleDoubleClick = (e) => {
+    // Only text tool allows double click editing
+    if (tool !== "text") return;
+
     const worldPoint = getWorldPoint(e);
-    handleTextDoubleClick(worldPoint);
+    const hitText = handleTextDoubleClick(worldPoint);
+    if (hitText) {
+      setSelectedIds([]);
+      setSelectionBox(null);
+    }
   };
 
   return (

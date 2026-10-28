@@ -10,13 +10,13 @@ const useText = ({
   zoom,
   color,
   size,
+  setSelectedIds,
+  setSelectionBox,
   emitStroke,
   emitUpdate,
   emitDelete,
   setUndoStack,
   setRedoStack,
-  handleUndo,
-  handleRedo,
 }) => {
   // Store text input
   const [textInput, setTextInput] = useState(null);
@@ -26,6 +26,12 @@ const useText = ({
 
   // If just completed text input, prevents rendering new text box when clicked outside the box
   const justBlurredRef = useRef(false);
+
+  // Ref to track if current click is dismissing an open text box on empty canvas
+  const isDismissingRef = useRef(false);
+
+  // Ref to track if clicking another existing text element while one is currently open
+  const pendingSwitchTextRef = useRef(null);
 
   // Store text history as entered
   const textHistoryRef = useRef([]);
@@ -70,6 +76,10 @@ const useText = ({
   };
 
   const openTextBox = (worldPoint, screenPoint, existingText = null) => {
+    // Clear selection box so it does not overlap with editing box
+    if (setSelectedIds) setSelectedIds([]);
+    if (setSelectionBox) setSelectionBox(null);
+
     if (existingText) {
       // If hit on existing text box, convert canvas coordinates to screen coordinates
       const screenPoint = worldToScreen(
@@ -100,24 +110,53 @@ const useText = ({
     }
   };
 
+  const handleTextPointerDown = (worldPoint) => {
+    const hitOtherText = findHitText(worldPoint);
+
+    if (hitOtherText && hitOtherText.id !== textInput?.id) {
+      // Clicked another text element -> Switch directly to it on pointerup
+      pendingSwitchTextRef.current = hitOtherText;
+      isDismissingRef.current = false;
+    } else if (!hitOtherText) {
+      // Clicked empty space -> Dismiss current text box and do not open a new one
+      pendingSwitchTextRef.current = null;
+      isDismissingRef.current = true;
+    }
+  };
+
   const handleTextPointerUp = (e, worldPoint) => {
+    // If clicked empty space -> Dismiss current text box and do not open a new one
+    if (isDismissingRef.current) {
+      isDismissingRef.current = false;
+      return;
+    }
+
+    // If switching to another text element -> Open that element
+    if (pendingSwitchTextRef.current) {
+      const target = pendingSwitchTextRef.current;
+      pendingSwitchTextRef.current = null;
+      openTextBox(worldPoint, { x: e.clientX, y: e.clientY }, target);
+      return;
+    }
+
     // If just completed text input
     if (justBlurredRef.current) return;
-
-    // If a text box is already open
-    if (textInput) return;
 
     const hitText = findHitText(worldPoint);
     openTextBox(worldPoint, { x: e.clientX, y: e.clientY }, hitText);
   };
 
+  // Double click to edit existing text element
   const handleTextDoubleClick = (worldPoint) => {
     const hitText = findHitText(worldPoint);
     if (hitText) {
       openTextBox(worldPoint, null, hitText);
+      return hitText;
     }
+    return null;
   };
 
+  // Helper to get width and height
   const getWidthHeight = (text) => {
     // Caclulate no. of lines
     const lines = text.split("\n");
@@ -137,6 +176,7 @@ const useText = ({
     return { width, height };
   };
 
+  // Saves the text to canvas, syncs with peers and closes the text box
   const handleTextBlur = (e) => {
     justBlurredRef.current = true;
     setTimeout(() => {
@@ -253,9 +293,8 @@ const useText = ({
           textHistoryIdxRef.current--;
           e.target.value = textHistoryRef.current[textHistoryIdxRef.current];
         } else {
-          // Reached the start -> Close text box and undo canvas stroke
+          // Reached the start -> Close text box without undoing previous canvas stroke
           setTextInput(null);
-          handleUndo();
         }
         return;
       }
@@ -271,9 +310,6 @@ const useText = ({
           // Redo text in the box
           textHistoryIdxRef.current++;
           e.target.value = textHistoryRef.current[textHistoryIdxRef.current];
-        } else {
-          // No more text to redo -> Redo canvas stroke
-          handleRedo();
         }
         return;
       }
@@ -287,7 +323,7 @@ const useText = ({
       return;
     }
 
-    // Render the text when pressed Enter and clear test box
+    // Render the text when pressed Enter and clear text box
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       e.target.blur();
@@ -299,11 +335,13 @@ const useText = ({
     textInput,
     setTextInput,
     textareaRef,
+    handleTextPointerDown,
     handleTextPointerUp,
     handleTextDoubleClick,
     handleTextBlur,
     handleTextInput,
     handleTextKeyDown,
+    isDismissingText: () => isDismissingRef.current,
   };
 };
 
