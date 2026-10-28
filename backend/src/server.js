@@ -6,6 +6,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import config from "./config/env.js";
 import authRoutes from "./routes/authRoutes.js";
+import roomRoutes from "./routes/roomRoutes.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { socketAuth } from "./sockets/socketAuth.js";
@@ -50,6 +51,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/auth", authRoutes);
+app.use("/room", roomRoutes);
 
 // Connect to DB
 connectDB();

@@ -30,6 +30,17 @@ const RoomSchema = new mongoose.Schema(
       type: Array,
       default: [],
     },
+    inviteToken: {
+      type: String,
+      index: true, // To make server lookup rooms faster
+    },
+    // [] populates members and defaults to empty array
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true },
 );
