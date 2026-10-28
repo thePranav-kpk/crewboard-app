@@ -183,6 +183,14 @@ const Whiteboard = () => {
     setRedoStack,
   });
 
+  // Remove the selection box if tool is not select
+  useEffect(() => {
+    if (tool !== "select") {
+      setSelectedIds([]);
+      setSelectionBox(null);
+    }
+  }, [tool, setSelectedIds, setSelectionBox]);
+
   useEffect(() => {
     elementsRef.current = elements;
   }, [elements]);
