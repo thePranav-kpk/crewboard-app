@@ -62,9 +62,9 @@ const useShape = ({
         color,
         size,
       });
-    } else if (tool === "arrow") {
+    } else if (tool === "arrow" || tool === "line") {
       setShapePreview({
-        type: "arrow",
+        type: tool,
         startX: shapeStartRef.current.x,
         startY: shapeStartRef.current.y,
         endX: worldPoint.x,
@@ -107,10 +107,10 @@ const useShape = ({
           color,
           size,
         };
-      } else if (tool === "arrow") {
+      } else if (tool === "arrow" || tool === "line") {
         element = {
           id: crypto.randomUUID(),
-          type: "arrow",
+          type: tool,
           startX: shapeStartRef.current.x,
           startY: shapeStartRef.current.y,
           endX: worldPoint.x,

@@ -100,8 +100,8 @@ const isStrokeHit = (stroke, eraserPoint, eraserRadius = 8) => {
 
     // Check if absolute difference between distance and radius is within eraser radius threshold
     return Math.abs(distance - stroke.radius) <= threshold;
-  } else if (stroke.type === "arrow") {
-    // Check if distance of eraserPoint from arrow is within eraser radius threshold
+  } else if (stroke.type === "arrow" || stroke.type === "line") {
+    // Check if distance of eraserPoint from arrow or line is within eraser radius threshold
     return (
       distanceToSegment(
         eraserPoint,
@@ -159,7 +159,7 @@ const getStrokeBounds = (stroke) => {
       width: 2 * stroke.radius,
       height: 2 * stroke.radius,
     };
-  } else if (stroke.type === "arrow") {
+  } else if (stroke.type === "arrow" || stroke.type === "line") {
     return {
       minX: Math.min(stroke.startX, stroke.endX),
       maxX: Math.max(stroke.startX, stroke.endX),

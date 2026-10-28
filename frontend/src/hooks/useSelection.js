@@ -78,7 +78,7 @@ const useSelection = ({
                 centerY: stroke.centerY + deltaY,
               };
             }
-          } else if (stroke.type === "arrow") {
+          } else if (stroke.type === "arrow" || stroke.type==="line") {
             if (selectedIds.includes(stroke.id)) {
               return {
                 ...stroke,

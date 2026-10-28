@@ -78,8 +78,8 @@ const useHistory = ({
 
             updatedElements.push(movedCircle);
             return movedCircle;
-          } else if (stroke.type === "arrow") {
-            // Moved arrow
+          } else if (stroke.type === "arrow" || stroke.type === "line") {
+            // Moved arrow or line
             const movedArrow = {
               ...stroke,
               startX: stroke.startX - action.dx,
@@ -175,8 +175,8 @@ const useHistory = ({
 
             updatedElements.push(movedCircle);
             return movedCircle;
-          } else if (stroke.type === "arrow") {
-            // Moved arrow
+          } else if (stroke.type === "arrow" || stroke.type === "line") {
+            // Moved arrow or line
             const movedArrow = {
               ...stroke,
               startX: stroke.startX + action.dx,
