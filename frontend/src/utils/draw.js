@@ -15,15 +15,44 @@ const getLineWidth = (stroke) => {
   return stroke.size || 4;
 };
 
+// Helper for text rendering
+const TEXT_FONT = "24px sans-serif";
+const TEXT_LINE_HEIGHT = 30;
+const getTextLines = (text) => text.split("\n");
+
 // Take a 2D Canvas context and paint a stroke object
 const renderStroke = (ctx, stroke, theme) => {
+  const strokeColor = getColor(stroke, theme);
+
+  if (stroke.type === "text") {
+    ctx.font = TEXT_FONT;
+    ctx.fillStyle = strokeColor;
+    ctx.textBaseline = "top";
+
+    const lines = getTextLines(stroke.text);
+
+    // Height of each line gets increased by 30
+    lines.forEach((line, index) =>
+      ctx.fillText(line, stroke.x, stroke.y + index * TEXT_LINE_HEIGHT),
+    );
+    return;
+  }
+
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = getLineWidth(stroke);
+
+  if (stroke.type === "rectangle") {
+    // Render a rectangle (Start from (x,y) and then add width, height to form rectangle)
+    ctx.strokeRect(stroke.x, stroke.y, stroke.width, stroke.height);
+    return;
+  }
+
+  // Start a new path
+  ctx.beginPath();
+
   if (stroke.type === "stroke" || !stroke.type) {
     if (!stroke.points || stroke.points.length === 0) return;
 
-    // Start a new path
-    ctx.beginPath();
-    ctx.strokeStyle = getColor(stroke, theme);
-    ctx.lineWidth = getLineWidth(stroke);
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -39,32 +68,10 @@ const renderStroke = (ctx, stroke, theme) => {
         ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
       }
     }
-
-    // Paint the stroke
-    ctx.stroke();
-  } else if (stroke.type === "rectangle") {
-    ctx.strokeStyle = getColor(stroke, theme);
-    ctx.lineWidth = getLineWidth(stroke);
-
-    // Render a rectangle (Start from (x,y) and then add width, height to form rectangle)
-    ctx.strokeRect(stroke.x, stroke.y, stroke.width, stroke.height);
   } else if (stroke.type === "circle") {
-    // Start a new path
-    ctx.beginPath();
-    ctx.strokeStyle = getColor(stroke, theme);
-    ctx.lineWidth = getLineWidth(stroke);
-
     // Render a full circle using center coordinates and radius
     ctx.arc(stroke.centerX, stroke.centerY, stroke.radius, 0, 2 * Math.PI);
-
-    // Paint the stroke
-    ctx.stroke();
   } else if (stroke.type === "arrow" || stroke.type === "line") {
-    // Start a new path
-    ctx.beginPath();
-    ctx.strokeStyle = getColor(stroke, theme);
-    ctx.lineWidth = getLineWidth(stroke);
-
     ctx.moveTo(stroke.startX, stroke.startY);
     ctx.lineTo(stroke.endX, stroke.endY);
 
@@ -91,24 +98,10 @@ const renderStroke = (ctx, stroke, theme) => {
         stroke.endY - headLength * Math.sin(angle + Math.PI / 6),
       );
     }
-
-    // Paint the stroke
-    ctx.stroke();
-  } else if (stroke.type === "text") {
-    ctx.font = "24px sans-serif";
-    ctx.fillStyle = getColor(stroke, theme);
-    ctx.textBaseline = "top";
-
-    const lines = stroke.text.split("\n");
-
-    // Height of each line gets increased by 30
-    lines.forEach((line, index) =>
-      ctx.fillText(line, stroke.x, stroke.y + index * 30),
-    );
-
-    // Paint the stroke
-    ctx.stroke();
   }
+
+  // Paint the stroke
+  ctx.stroke();
 };
 
-export { renderStroke };
+export { renderStroke, getTextLines, TEXT_FONT, TEXT_LINE_HEIGHT };

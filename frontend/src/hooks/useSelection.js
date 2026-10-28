@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { getGroupBounds, isStrokeInBox } from "../utils/hitTest.js";
+import { moveStroke } from "../utils/coordinates.js";
 
 const useSelection = ({
   elements,
@@ -55,44 +56,11 @@ const useSelection = ({
       const deltaY = worldPoint.y - dragLastPosRef.current.y;
 
       setElements((prev) =>
-        prev.map((stroke) => {
-          if (stroke.type === "stroke" || !stroke.type) {
-            if (selectedIds.includes(stroke.id)) {
-              return {
-                ...stroke,
-                points: stroke.points.map((point) => ({
-                  x: point.x + deltaX,
-                  y: point.y + deltaY,
-                })),
-              };
-            }
-          } else if (stroke.type === "rectangle" || stroke.type === "text") {
-            // Text box is similar to rectangle
-
-            if (selectedIds.includes(stroke.id)) {
-              return { ...stroke, x: stroke.x + deltaX, y: stroke.y + deltaY };
-            }
-          } else if (stroke.type === "circle") {
-            if (selectedIds.includes(stroke.id)) {
-              return {
-                ...stroke,
-                centerX: stroke.centerX + deltaX,
-                centerY: stroke.centerY + deltaY,
-              };
-            }
-          } else if (stroke.type === "arrow" || stroke.type === "line") {
-            if (selectedIds.includes(stroke.id)) {
-              return {
-                ...stroke,
-                startX: stroke.startX + deltaX,
-                startY: stroke.startY + deltaY,
-                endX: stroke.endX + deltaX,
-                endY: stroke.endY + deltaY,
-              };
-            }
-          }
-          return stroke;
-        }),
+        prev.map((stroke) =>
+          selectedIds.includes(stroke.id)
+            ? moveStroke(stroke, deltaX, deltaY)
+            : stroke,
+        ),
       );
 
       dragLastPosRef.current = worldPoint;

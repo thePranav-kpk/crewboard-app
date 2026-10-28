@@ -19,4 +19,37 @@ const worldToScreen = (point, pan, zoom) => {
   return { x: x_screen, y: y_screen };
 };
 
-export { screenToWorld, worldToScreen };
+// Stroke translation by (dx, dy) to move to new position
+const moveStroke = (stroke, dx, dy) => {
+  if (stroke.type === "rectangle" || stroke.type === "text") {
+    // Text box is similar to rectangle
+
+    // Moved rectangle
+    return { ...stroke, x: stroke.x + dx, y: stroke.y + dy };
+  }
+  if (stroke.type === "circle") {
+    // Moved circle
+    return {
+      ...stroke,
+      centerX: stroke.centerX + dx,
+      centerY: stroke.centerY + dy,
+    };
+  }
+  if (stroke.type === "arrow" || stroke.type === "line") {
+    // Moved arrow or line
+    return {
+      ...stroke,
+      startX: stroke.startX + dx,
+      startY: stroke.startY + dy,
+      endX: stroke.endX + dx,
+      endY: stroke.endY + dy,
+    };
+  }
+  // Moved stroke
+  return {
+    ...stroke,
+    points: stroke.points?.map((p) => ({ x: p.x + dx, y: p.y + dy })) || [],
+  };
+};
+
+export { screenToWorld, worldToScreen, moveStroke };

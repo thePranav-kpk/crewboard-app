@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import { moveStroke } from "../utils/coordinates.js";
 
 const useHistory = ({
   elementsRef,
@@ -57,53 +58,10 @@ const useHistory = ({
 
       const nextElements = elementsRef.current.map((stroke) => {
         if (action.strokeIds.includes(stroke.id)) {
-          if (stroke.type === "stroke" || !stroke.type) {
-            // Moved stroke
-            const movedStroke = {
-              ...stroke,
-              points: stroke.points.map((point) => ({
-                x: point.x - action.dx,
-                y: point.y - action.dy,
-              })),
-            };
+          const moved = moveStroke(stroke, -action.dx, -action.dy);
 
-            updatedElements.push(movedStroke);
-            return movedStroke;
-          } else if (stroke.type === "rectangle" || stroke.type === "text") {
-            // Text box is similar to rectangle
-
-            // Moved rectangle
-            const movedRectangle = {
-              ...stroke,
-              x: stroke.x - action.dx,
-              y: stroke.y - action.dy,
-            };
-
-            updatedElements.push(movedRectangle);
-            return movedRectangle;
-          } else if (stroke.type === "circle") {
-            // Moved circle
-            const movedCircle = {
-              ...stroke,
-              centerX: stroke.centerX - action.dx,
-              centerY: stroke.centerY - action.dy,
-            };
-
-            updatedElements.push(movedCircle);
-            return movedCircle;
-          } else if (stroke.type === "arrow" || stroke.type === "line") {
-            // Moved arrow or line
-            const movedArrow = {
-              ...stroke,
-              startX: stroke.startX - action.dx,
-              startY: stroke.startY - action.dy,
-              endX: stroke.endX - action.dx,
-              endY: stroke.endY - action.dy,
-            };
-
-            updatedElements.push(movedArrow);
-            return movedArrow;
-          }
+          updatedElements.push(moved);
+          return moved;
         }
 
         return stroke;
@@ -167,53 +125,10 @@ const useHistory = ({
 
       const nextElements = elementsRef.current.map((stroke) => {
         if (action.strokeIds.includes(stroke.id)) {
-          if (stroke.type === "stroke" || !stroke.type) {
-            // Moved stroke
-            const movedStroke = {
-              ...stroke,
-              points: stroke.points.map((point) => ({
-                x: point.x + action.dx,
-                y: point.y + action.dy,
-              })),
-            };
+          const moved = moveStroke(stroke, action.dx, action.dy);
 
-            updatedElements.push(movedStroke);
-            return movedStroke;
-          } else if (stroke.type === "rectangle" || stroke.type === "text") {
-            // Text box is similar to rectangle
-
-            // Moved rectangle
-            const movedRectangle = {
-              ...stroke,
-              x: stroke.x + action.dx,
-              y: stroke.y + action.dy,
-            };
-
-            updatedElements.push(movedRectangle);
-            return movedRectangle;
-          } else if (stroke.type === "circle") {
-            // Moved circle
-            const movedCircle = {
-              ...stroke,
-              centerX: stroke.centerX + action.dx,
-              centerY: stroke.centerY + action.dy,
-            };
-
-            updatedElements.push(movedCircle);
-            return movedCircle;
-          } else if (stroke.type === "arrow" || stroke.type === "line") {
-            // Moved arrow or line
-            const movedArrow = {
-              ...stroke,
-              startX: stroke.startX + action.dx,
-              startY: stroke.startY + action.dy,
-              endX: stroke.endX + action.dx,
-              endY: stroke.endY + action.dy,
-            };
-
-            updatedElements.push(movedArrow);
-            return movedArrow;
-          }
+          updatedElements.push(moved);
+          return moved;
         }
 
         return stroke;
