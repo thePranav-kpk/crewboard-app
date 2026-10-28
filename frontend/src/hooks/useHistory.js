@@ -40,6 +40,17 @@ const useHistory = ({
 
       // Add to redo stack
       setRedoStack((prev) => [...prev, action]);
+    } else if (action.type === "edit") {
+      // Go back to actual element
+      setElements((prev) =>
+        prev.map((el) => (el.id === action.previous.id ? action.previous : el)),
+      );
+
+      // Broadcast to peers
+      emitUpdate([action.previous]);
+
+      // Add to redo stack
+      setRedoStack((prev) => [...prev, action]);
     } else if (action.type === "move") {
       // Move the strokes, rectangle back to original position
       const updatedElements = [];
@@ -58,7 +69,9 @@ const useHistory = ({
 
             updatedElements.push(movedStroke);
             return movedStroke;
-          } else if (stroke.type === "rectangle") {
+          } else if (stroke.type === "rectangle" || stroke.type === "text") {
+            // Text box is similar to rectangle
+
             // Moved rectangle
             const movedRectangle = {
               ...stroke,
@@ -137,6 +150,17 @@ const useHistory = ({
 
       // Add to undo stack
       setUndoStack((prev) => [...prev, action]);
+    } else if (action.type === "edit") {
+      // Go back to edited element
+      setElements((prev) =>
+        prev.map((el) => (el.id === action.stroke.id ? action.stroke : el)),
+      );
+
+      // Broadcast to peers
+      emitUpdate([action.stroke]);
+
+      // Add to redo stack
+      setUndoStack((prev) => [...prev, action]);
     } else if (action.type === "move") {
       // Move the strokes, rectangle back to original position
       const updatedElements = [];
@@ -155,7 +179,9 @@ const useHistory = ({
 
             updatedElements.push(movedStroke);
             return movedStroke;
-          } else if (stroke.type === "rectangle") {
+          } else if (stroke.type === "rectangle" || stroke.type === "text") {
+            // Text box is similar to rectangle
+
             // Moved rectangle
             const movedRectangle = {
               ...stroke,

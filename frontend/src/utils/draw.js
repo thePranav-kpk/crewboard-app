@@ -94,6 +94,20 @@ const renderStroke = (ctx, stroke, theme) => {
 
     // Paint the stroke
     ctx.stroke();
+  } else if (stroke.type === "text") {
+    ctx.font = "24px sans-serif";
+    ctx.fillStyle = getColor(stroke, theme);
+    ctx.textBaseline = "top";
+
+    const lines = stroke.text.split("\n");
+
+    // Height of each line gets increased by 30
+    lines.forEach((line, index) =>
+      ctx.fillText(line, stroke.x, stroke.y + index * 30),
+    );
+
+    // Paint the stroke
+    ctx.stroke();
   }
 };
 

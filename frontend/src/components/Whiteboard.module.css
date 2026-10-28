@@ -23,3 +23,22 @@
 .cursorCrosshair {
   cursor: crosshair;
 }
+
+.textOverlay {
+  position: absolute;
+  background: transparent;
+  border: none;
+  outline: 1.5px dashed #3b82f6;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 24px;
+  line-height: 30px;
+  padding: 2px 4px;
+  margin: 0;
+  min-width: 140px;
+  min-height: 36px;
+  resize: none;
+  overflow: hidden;
+  white-space: pre;
+  z-index: 30;
+  caret-color: #3b82f6;
+}

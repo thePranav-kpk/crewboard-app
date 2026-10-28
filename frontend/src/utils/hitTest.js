@@ -109,6 +109,14 @@ const isStrokeHit = (stroke, eraserPoint, eraserRadius = 8) => {
         { x: stroke.endX, y: stroke.endY },
       ) <= threshold
     );
+  } else if (stroke.type === "text") {
+    // Check if eraserPoint is within text box
+    return (
+      stroke.x - threshold <= eraserPoint.x &&
+      eraserPoint.x <= stroke.x + stroke.width + threshold &&
+      stroke.y - threshold <= eraserPoint.y &&
+      eraserPoint.y <= stroke.y + stroke.height + threshold
+    );
   }
 
   return false;
@@ -141,7 +149,9 @@ const getStrokeBounds = (stroke) => {
       width: maxX - minX,
       height: maxY - minY,
     };
-  } else if (stroke.type === "rectangle") {
+  } else if (stroke.type === "rectangle" || stroke.type === "text") {
+    // Text box is similar to rectangle
+
     return {
       minX: stroke.x,
       maxX: stroke.x + stroke.width,
@@ -200,11 +210,20 @@ const getGroupBounds = (strokes) => {
 // Check if any point in a stroke lies inside the selected box
 const isStrokeInBox = (stroke, start, current) => {
   // Edges of selection box
-  const minX = Math.min(start.x, current.x);
-  const maxX = Math.max(start.x, current.x);
+  let minX = Math.min(start.x, current.x);
+  let maxX = Math.max(start.x, current.x);
 
-  const minY = Math.min(start.y, current.y);
-  const maxY = Math.max(start.y, current.y);
+  let minY = Math.min(start.y, current.y);
+  let maxY = Math.max(start.y, current.y);
+
+  // If single click without drag, add tolerance padding for easy clicking
+  if (Math.abs(start.x - current.x) < 4 && Math.abs(start.y - current.y) < 4) {
+    const clickPad = 6;
+    minX -= clickPad;
+    maxX += clickPad;
+    minY -= clickPad;
+    maxY += clickPad;
+  }
 
   // Handles even pen strokes
   // Edges of shape (Actually coordinates in 1D)

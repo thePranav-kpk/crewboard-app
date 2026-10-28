@@ -66,7 +66,9 @@ const useSelection = ({
                 })),
               };
             }
-          } else if (stroke.type === "rectangle") {
+          } else if (stroke.type === "rectangle" || stroke.type === "text") {
+            // Text box is similar to rectangle
+
             if (selectedIds.includes(stroke.id)) {
               return { ...stroke, x: stroke.x + deltaX, y: stroke.y + deltaY };
             }
@@ -78,7 +80,7 @@ const useSelection = ({
                 centerY: stroke.centerY + deltaY,
               };
             }
-          } else if (stroke.type === "arrow" || stroke.type==="line") {
+          } else if (stroke.type === "arrow" || stroke.type === "line") {
             if (selectedIds.includes(stroke.id)) {
               return {
                 ...stroke,

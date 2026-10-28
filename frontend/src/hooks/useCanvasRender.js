@@ -18,6 +18,7 @@ const useCanvasRender = ({
   handleWheel,
   isDrawingShape,
   shapePreview,
+  editingTextId,
 }) => {
   // Zoom only the canvas
   useEffect(() => {
@@ -67,7 +68,11 @@ const useCanvasRender = ({
 
     // Redraw all the elements
     // Pass theme to switch the stroke colors if same theme and similar color
-    elements.forEach((stroke) => renderStroke(ctx, stroke, theme));
+    elements.forEach((stroke) => {
+      if (stroke.id !== editingTextId) {
+        renderStroke(ctx, stroke, theme);
+      }
+    });
 
     // Draw highlighted box around selected strokes
     if (selectedIds.length > 0) {
@@ -143,6 +148,7 @@ const useCanvasRender = ({
     selectionBox,
     theme,
     shapePreview,
+    editingTextId,
   ]);
 };
 
