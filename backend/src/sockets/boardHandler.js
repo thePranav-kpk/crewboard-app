@@ -9,11 +9,11 @@ import {
 // Emit board events to everyone in the room except the sender
 const registerBoardHandlers = (io, socket) => {
   // Event for joining room
-  socket.on("room:join", ({ roomId, key }, callback) => {
+  socket.on("room:join", async ({ roomId, token, key }, callback) => {
     try {
-      const { currentElements, activeUsers } = joinRoom({
+      const { currentElements, activeUsers } = await joinRoom({
         roomId,
-        key,
+        token: token || key,
         socketId: socket.id,
         user: socket.user,
       });
