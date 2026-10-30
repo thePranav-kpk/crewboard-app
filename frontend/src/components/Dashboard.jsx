@@ -1,0 +1,413 @@
+import { useEffect, useState } from "react";
+import {
+  Plus,
+  Search,
+  Share2,
+  Trash2,
+  Clock,
+  LogOut,
+  Sun,
+  Moon,
+  LayoutGrid,
+  Check,
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import apiClient from "../services/api";
+import styles from "./Dashboard.module.css";
+
+const formatDate = (updatedAt) => {
+  if (!updatedAt) return "";
+
+  const date = new Date(updatedAt);
+  const now = new Date();
+
+  const millisecDiff = Math.floor(now - date);
+  const secDiff = Math.floor(millisecDiff / 1000);
+  const minDiff = Math.floor(secDiff / 60);
+  const hourDiff = Math.floor(minDiff / 60);
+  const dateDiff = Math.floor(hourDiff / 24);
+  const monthDiff = Math.floor(dateDiff / 30);
+  const yearDiff = Math.floor(monthDiff / 12);
+
+  const formatUnit = (val, unit) =>
+    `${val} ${val === 1 ? unit : unit + "s"} ago`;
+
+  if (yearDiff) return formatUnit(yearDiff, "year");
+  if (monthDiff) return formatUnit(monthDiff, "month");
+  if (dateDiff) return formatUnit(dateDiff, "day");
+  if (hourDiff) return formatUnit(hourDiff, "hour");
+  if (minDiff) return formatUnit(minDiff, "minute");
+  if (secDiff) return formatUnit(secDiff, "second");
+
+  return "Just now";
+};
+
+const Dashboard = ({
+  onOpenBoard,
+  theme = localStorage.getItem("theme") || "light",
+  handleToggleTheme,
+}) => {
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [copiedRoomId, setCopiedRoomId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { user, logout } = useAuth();
+  const isDark = theme === "dark";
+
+  // Fetch recent rooms on login
+  useEffect(() => {
+    const fetchRecentRooms = async () => {
+      setLoading(true);
+      try {
+        const response = await apiClient.get("/room/recent");
+        setRooms(response.data.rooms || []);
+      } catch {
+        setRooms([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRecentRooms();
+  }, []);
+
+  const handleAddBoard = async () => {
+    try {
+      const response = await apiClient.post("/room", {
+        name: "Untitled Board",
+      });
+      onOpenBoard(response.data.room.roomId, response.data.room.inviteToken);
+    } catch (err) {
+      console.error("Failed to create board:", err);
+    }
+  };
+
+  const handleCopyLink = (e, room) => {
+    e.stopPropagation();
+
+    navigator.clipboard.writeText(
+      `${window.location.origin}/room/${room.roomId}?token=${room.inviteToken}`,
+    );
+    setCopiedRoomId(room.roomId);
+
+    setTimeout(() => setCopiedRoomId(null), 2000);
+  };
+
+  const handleDeleteBoard = async (e, room) => {
+    e.stopPropagation();
+
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${room.name || "Untitled Board"}"?`,
+      )
+    ) {
+      await apiClient.delete(`/room/${room.roomId}`);
+      setRooms((prev) => prev.filter((r) => r.roomId !== room.roomId));
+    }
+  };
+
+  const filteredRooms =
+    rooms?.filter((room) =>
+      room.name?.toLowerCase().includes(searchQuery.toLowerCase()),
+    ) || [];
+
+  return (
+    <div
+      className={`${styles.dashboardContainer} ${
+        isDark ? styles.dashboardContainerDark : ""
+      }`}
+    >
+      {/* 1. Navbar */}
+      <header className={`${styles.navbar} ${isDark ? styles.navbarDark : ""}`}>
+        <div className={styles.brand}>
+          <svg
+            className={styles.brandLogo}
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect x="2" y="2" width="12" height="12" rx="3.5" fill="#3b82f6" />
+            <rect x="18" y="2" width="12" height="12" rx="3.5" fill="#6366f1" />
+            <rect
+              x="2"
+              y="18"
+              width="12"
+              height="12"
+              rx="3.5"
+              fill="#6366f1"
+              opacity="0.8"
+            />
+            <rect
+              x="18"
+              y="18"
+              width="12"
+              height="12"
+              rx="3.5"
+              fill="#3b82f6"
+              opacity="0.8"
+            />
+          </svg>
+          <span
+            className={`${styles.brandName} ${
+              isDark ? styles.brandNameDark : ""
+            }`}
+          >
+            CrewBoard
+          </span>
+        </div>
+
+        <div className={styles.navRight}>
+          {/* User Profile */}
+          <div
+            className={`${styles.userPill} ${isDark ? styles.userPillDark : ""}`}
+          >
+            {user?.picture ? (
+              <img
+                src={user.picture}
+                alt={user?.name || "User"}
+                className={styles.avatar}
+              />
+            ) : (
+              <div className={styles.avatarFallback}>
+                {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+              </div>
+            )}
+            <span className={styles.userName}>{user?.name}</span>
+          </div>
+
+          {/* Theme Toggle Button */}
+          {handleToggleTheme && (
+            <button
+              type="button"
+              onClick={handleToggleTheme}
+              className={`${styles.iconBtn} ${isDark ? styles.iconBtnDark : ""}`}
+              title={`Switch to ${isDark ? "Light" : "Dark"} mode`}
+            >
+              {isDark ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+          )}
+
+          {/* Logout Button */}
+          <button
+            type="button"
+            onClick={() => logout()}
+            className={styles.logoutBtn}
+          >
+            <LogOut size={15} />
+            <span>Logout</span>
+          </button>
+        </div>
+      </header>
+
+      {/* 2. Main Content */}
+      <main className={styles.mainContent}>
+        <section className={styles.dashboardHeader}>
+          <div className={styles.headerTopRow}>
+            <div>
+              <h1
+                className={`${styles.headerTitle} ${
+                  isDark ? styles.headerTitleDark : ""
+                }`}
+              >
+                Recent Boards
+              </h1>
+              <p
+                className={`${styles.headerSubtitle} ${
+                  isDark ? styles.headerSubtitleDark : ""
+                }`}
+              >
+                Collaborative spaces you own or contribute to.
+              </p>
+            </div>
+
+            <div className={styles.headerActions}>
+              {/* Search Bar */}
+              <div className={styles.searchWrapper}>
+                <Search size={16} className={styles.searchIcon} />
+                <input
+                  type="text"
+                  placeholder="Filter boards..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`${styles.searchInput} ${
+                    isDark ? styles.searchInputDark : ""
+                  }`}
+                />
+              </div>
+
+              {/* New Board Button (+) */}
+              <button
+                type="button"
+                onClick={handleAddBoard}
+                className={styles.newBoardBtn}
+              >
+                <Plus size={18} strokeWidth={2.5} />
+                <span>New Board</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Boards Grid */}
+        {loading ? (
+          <div className={styles.loadingWrapper}>
+            <div className={styles.spinner} />
+            <span
+              className={`${styles.headerSubtitle} ${
+                isDark ? styles.headerSubtitleDark : ""
+              }`}
+            >
+              Fetching recent rooms...
+            </span>
+          </div>
+        ) : filteredRooms.length === 0 ? (
+          <div
+            className={`${styles.emptyState} ${
+              isDark ? styles.emptyStateDark : ""
+            }`}
+          >
+            <div className={styles.emptyIconWrapper}>
+              <LayoutGrid size={28} />
+            </div>
+            <h2
+              className={`${styles.emptyTitle} ${
+                isDark ? styles.emptyTitleDark : ""
+              }`}
+            >
+              {searchQuery ? "No matching boards found" : "No boards yet"}
+            </h2>
+            <p
+              className={`${styles.emptyDesc} ${
+                isDark ? styles.emptyDescDark : ""
+              }`}
+            >
+              {searchQuery
+                ? `No boards match "${searchQuery}". Try a different search.`
+                : "Create your first collaborative canvas to sketch diagrams, wireframes, and brainstorm in real-time."}
+            </p>
+            {!searchQuery && (
+              <button
+                type="button"
+                onClick={handleAddBoard}
+                className={styles.newBoardBtn}
+              >
+                <Plus size={18} strokeWidth={2.5} />
+                <span>Create your first board</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className={styles.boardsGrid}>
+            {filteredRooms.map((room) => {
+              const isOwner = room.owner?._id === user?.id;
+
+              return (
+                <div
+                  key={room.roomId}
+                  onClick={() => onOpenBoard(room.roomId, room.inviteToken)}
+                  className={`${styles.boardCard} ${
+                    isDark ? styles.boardCardDark : ""
+                  }`}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      onOpenBoard(room.roomId, room.inviteToken);
+                    }
+                  }}
+                >
+                  {/* Card Thumbnail */}
+                  <div
+                    className={`${styles.cardPreview} ${
+                      isDark ? styles.cardPreviewDark : ""
+                    }`}
+                  >
+                    <LayoutGrid
+                      size={36}
+                      className={styles.cardIconWatermark}
+                    />
+                  </div>
+
+                  {/* Card Body */}
+                  <div className={styles.cardBody}>
+                    <div className={styles.cardTitleRow}>
+                      <h3
+                        className={`${styles.boardTitle} ${
+                          isDark ? styles.boardTitleDark : ""
+                        }`}
+                        title={room.name}
+                      >
+                        {room.name || "Untitled Board"}
+                      </h3>
+                      <span
+                        className={`${styles.roleBadge} ${
+                          isOwner
+                            ? isDark
+                              ? styles.roleOwnerDark
+                              : styles.roleOwner
+                            : isDark
+                              ? styles.roleMemberDark
+                              : styles.roleMember
+                        }`}
+                      >
+                        {isOwner ? "Owner" : "Member"}
+                      </span>
+                    </div>
+
+                    {/* Card Footer with relative time & quick actions */}
+                    <div
+                      className={`${styles.cardFooter} ${
+                        isDark ? styles.cardFooterDark : ""
+                      }`}
+                    >
+                      <div className={styles.timeInfo}>
+                        <Clock size={13} />
+                        <span>{formatDate(room.updatedAt)}</span>
+                      </div>
+
+                      <div className={styles.cardActions}>
+                        {/* Share Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleCopyLink(e, room)}
+                          className={`${styles.cardActionBtn} ${
+                            isDark ? styles.cardActionBtnDark : ""
+                          }`}
+                          title="Copy share link"
+                          aria-label="Copy share link"
+                        >
+                          {copiedRoomId === room.roomId ? (
+                            <Check size={14} color="#10b981" />
+                          ) : (
+                            <Share2 size={14} />
+                          )}
+                        </button>
+
+                        {/* Delete Button (Owner only) */}
+                        {isOwner && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteBoard(e, room)}
+                            className={`${styles.cardActionBtn} ${styles.deleteBtn} ${
+                              isDark ? styles.cardActionBtnDark : ""
+                            }`}
+                            title="Delete board"
+                            aria-label="Delete board"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default Dashboard;

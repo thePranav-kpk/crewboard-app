@@ -1,13 +1,24 @@
 import { useState } from "react";
-import { Share2, Check, Sun, Moon, LogOut, Download } from "lucide-react";
+import {
+  Share2,
+  Check,
+  Sun,
+  Moon,
+  LogOut,
+  Download,
+  ChevronLeft,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import ExportModal from "./ExportModal.jsx";
 import styles from "./Header.module.css";
 
 const Header = ({
   roomId = "general",
+  roomName,
+  token = "",
   theme,
   handleToggleTheme,
+  onBackToDashboard,
   elements = [],
 }) => {
   const { user, logout } = useAuth();
@@ -18,7 +29,8 @@ const Header = ({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      const inviteUrl = `${window.location.origin}/room/${roomId}${token ? `?token=${token}` : ""}`;
+      await navigator.clipboard.writeText(inviteUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -30,12 +42,30 @@ const Header = ({
     <header
       className={`${styles.headerContainer} ${isDark ? styles.headerContainerDark : ""}`}
     >
+      {/* Back to Dashboard */}
+      {onBackToDashboard && (
+        <>
+          <button
+            type="button"
+            onClick={onBackToDashboard}
+            className={`${styles.backButton} ${isDark ? styles.backButtonDark : ""}`}
+            title="Back to Dashboard"
+          >
+            <ChevronLeft size={15} />
+            <span>Boards</span>
+          </button>
+          <div
+            className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`}
+          />
+        </>
+      )}
       {/* 1. Room & Share Link */}
       <div className={styles.roomSection}>
         <span
           className={`${styles.roomBadge} ${isDark ? styles.roomBadgeDark : ""}`}
+          title={`Room ID: ${roomId}`}
         >
-          {roomId}
+          {roomName || "Untitled Board"}
         </span>
         <button
           type="button"

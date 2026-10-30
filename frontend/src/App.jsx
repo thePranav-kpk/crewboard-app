@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "./context/AuthContext.jsx";
 import Whiteboard from "./components/Whiteboard.jsx";
+import Dashboard from "./components/Dashboard.jsx";
 import {
   Zap,
   Infinity as InfinityIcon,
@@ -10,7 +12,61 @@ import {
 import styles from "./App.module.css";
 
 const App = () => {
+  const [activeRoom, setActiveRoom] = useState(() => {
+    const match = window.location.pathname.match(/^\/room\/([^/]+)/);
+    if (match) {
+      const params = new URLSearchParams(window.location.search);
+      return { roomId: match[1], token: params.get("token") || "" };
+    }
+    return null;
+  });
+
+  // Lazy initial state
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem("theme");
+    return savedTheme ? savedTheme : "light";
+  });
+
+  // Store theme in localStorage
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const match = window.location.pathname.match(/^\/room\/([^/]+)/);
+      if (match) {
+        const params = new URLSearchParams(window.location.search);
+        setActiveRoom({ roomId: match[1], token: params.get("token") || "" });
+      } else {
+        setActiveRoom(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const { user, loading, login } = useAuth();
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => {
+      const nextTheme = prev === "light" ? "dark" : "light";
+      localStorage.setItem("theme", nextTheme);
+      return nextTheme;
+    });
+  };
+
+  const handleOpenBoard = (roomId, token) => {
+    setActiveRoom({ roomId, token });
+    const url = `/room/${roomId}${token ? `?token=${token}` : ""}`;
+    window.history.pushState(null, "", url);
+  };
+
+  const handleBackToDashboard = () => {
+    setActiveRoom(null);
+    window.history.pushState(null, "", "/");
+  };
 
   if (loading) {
     return (
@@ -35,10 +91,40 @@ const App = () => {
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <rect x="2" y="2" width="12" height="12" rx="3.5" fill="#3b82f6" />
-                <rect x="18" y="2" width="12" height="12" rx="3.5" fill="#6366f1" />
-                <rect x="2" y="18" width="12" height="12" rx="3.5" fill="#6366f1" opacity="0.8" />
-                <rect x="18" y="18" width="12" height="12" rx="3.5" fill="#3b82f6" opacity="0.8" />
+                <rect
+                  x="2"
+                  y="2"
+                  width="12"
+                  height="12"
+                  rx="3.5"
+                  fill="#3b82f6"
+                />
+                <rect
+                  x="18"
+                  y="2"
+                  width="12"
+                  height="12"
+                  rx="3.5"
+                  fill="#6366f1"
+                />
+                <rect
+                  x="2"
+                  y="18"
+                  width="12"
+                  height="12"
+                  rx="3.5"
+                  fill="#6366f1"
+                  opacity="0.8"
+                />
+                <rect
+                  x="18"
+                  y="18"
+                  width="12"
+                  height="12"
+                  rx="3.5"
+                  fill="#3b82f6"
+                  opacity="0.8"
+                />
               </svg>
               <span className={styles.brandName}>CrewBoard</span>
             </div>
@@ -81,12 +167,14 @@ const App = () => {
 
           <h1 className={styles.heroHeadline}>
             Where creative ideas <br />
-            <span className={styles.heroHeadlineHighlight}>take shape, together.</span>
+            <span className={styles.heroHeadlineHighlight}>
+              take shape, together.
+            </span>
           </h1>
 
           <p className={styles.heroSubheadline}>
-            An infinite collaborative canvas for teams to brainstorm, sketch system architecture,
-            and design in real time with live peer cursors.
+            An infinite collaborative canvas for teams to brainstorm, sketch
+            system architecture, and design in real time with live peer cursors.
           </p>
 
           <div className={styles.ctaGroup}>
@@ -122,7 +210,9 @@ const App = () => {
               </svg>
               <span>Continue with Google</span>
             </button>
-            <span className={styles.ctaSubtext}>Free & open source • Zero setup • Works in any browser</span>
+            <span className={styles.ctaSubtext}>
+              Free & open source • Zero setup • Works in any browser
+            </span>
           </div>
 
           {/* Interactive Showcase Mockup */}
@@ -148,58 +238,189 @@ const App = () => {
               {/* Canvas Preview Body */}
               <div className={styles.mockupCanvas}>
                 {/* Vector Diagram Sketches */}
-                <svg className={styles.canvasSketch} viewBox="0 0 700 320" fill="none">
+                <svg
+                  className={styles.canvasSketch}
+                  viewBox="0 0 700 320"
+                  fill="none"
+                >
                   {/* Auth Node */}
-                  <rect x="60" y="80" width="140" height="70" rx="10" stroke="#3b82f6" strokeWidth="2.5" strokeDasharray="5 5" fill="rgba(59, 130, 246, 0.08)" />
-                  <text x="130" y="122" fill="#93c5fd" fontSize="14" fontWeight="600" textAnchor="middle" fontFamily="sans-serif">Auth Service</text>
+                  <rect
+                    x="60"
+                    y="80"
+                    width="140"
+                    height="70"
+                    rx="10"
+                    stroke="#3b82f6"
+                    strokeWidth="2.5"
+                    strokeDasharray="5 5"
+                    fill="rgba(59, 130, 246, 0.08)"
+                  />
+                  <text
+                    x="130"
+                    y="122"
+                    fill="#93c5fd"
+                    fontSize="14"
+                    fontWeight="600"
+                    textAnchor="middle"
+                    fontFamily="sans-serif"
+                  >
+                    Auth Service
+                  </text>
 
                   {/* Arrow 1 */}
-                  <path d="M200 115 L310 115" stroke="#60a5fa" strokeWidth="2" markerEnd="url(#arrow)" />
+                  <path
+                    d="M200 115 L310 115"
+                    stroke="#60a5fa"
+                    strokeWidth="2"
+                    markerEnd="url(#arrow)"
+                  />
                   <polygon points="310,115 302,110 302,120" fill="#60a5fa" />
 
                   {/* Engine Node */}
-                  <rect x="315" y="65" width="160" height="100" rx="12" stroke="#8b5cf6" strokeWidth="2.5" fill="rgba(139, 92, 246, 0.12)" />
-                  <text x="395" y="112" fill="#c4b5fd" fontSize="15" fontWeight="700" textAnchor="middle" fontFamily="sans-serif">WebSocket Sync</text>
-                  <text x="395" y="134" fill="#a78bfa" fontSize="12" textAnchor="middle" fontFamily="sans-serif">60 FPS Real-Time</text>
+                  <rect
+                    x="315"
+                    y="65"
+                    width="160"
+                    height="100"
+                    rx="12"
+                    stroke="#8b5cf6"
+                    strokeWidth="2.5"
+                    fill="rgba(139, 92, 246, 0.12)"
+                  />
+                  <text
+                    x="395"
+                    y="112"
+                    fill="#c4b5fd"
+                    fontSize="15"
+                    fontWeight="700"
+                    textAnchor="middle"
+                    fontFamily="sans-serif"
+                  >
+                    WebSocket Sync
+                  </text>
+                  <text
+                    x="395"
+                    y="134"
+                    fill="#a78bfa"
+                    fontSize="12"
+                    textAnchor="middle"
+                    fontFamily="sans-serif"
+                  >
+                    60 FPS Real-Time
+                  </text>
 
                   {/* Arrow 2 */}
-                  <path d="M475 115 L570 115" stroke="#a78bfa" strokeWidth="2" />
+                  <path
+                    d="M475 115 L570 115"
+                    stroke="#a78bfa"
+                    strokeWidth="2"
+                  />
                   <polygon points="570,115 562,110 562,120" fill="#a78bfa" />
 
                   {/* Database Node */}
-                  <rect x="575" y="80" width="130" height="70" rx="10" stroke="#10b981" strokeWidth="2.5" fill="rgba(16, 185, 129, 0.08)" />
-                  <text x="640" y="122" fill="#6ee7b7" fontSize="14" fontWeight="600" textAnchor="middle" fontFamily="sans-serif">Room Memory</text>
+                  <rect
+                    x="575"
+                    y="80"
+                    width="130"
+                    height="70"
+                    rx="10"
+                    stroke="#10b981"
+                    strokeWidth="2.5"
+                    fill="rgba(16, 185, 129, 0.08)"
+                  />
+                  <text
+                    x="640"
+                    y="122"
+                    fill="#6ee7b7"
+                    fontSize="14"
+                    fontWeight="600"
+                    textAnchor="middle"
+                    fontFamily="sans-serif"
+                  >
+                    Room Memory
+                  </text>
 
                   {/* Freehand note annotation */}
-                  <path d="M340 210 Q370 230 430 205" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
-                  <text x="385" y="245" fill="#fcd34d" fontSize="13" fontStyle="italic" textAnchor="middle" fontFamily="sans-serif">Multiplayer canvas pipeline</text>
+                  <path
+                    d="M340 210 Q370 230 430 205"
+                    stroke="#f59e0b"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                  <text
+                    x="385"
+                    y="245"
+                    fill="#fcd34d"
+                    fontSize="13"
+                    fontStyle="italic"
+                    textAnchor="middle"
+                    fontFamily="sans-serif"
+                  >
+                    Multiplayer canvas pipeline
+                  </text>
                 </svg>
 
                 {/* Floating Peer Cursors */}
-                <div className={`${styles.peerCursor} ${styles.cursorSarah}`} style={{ left: "25%", top: "35%" }}>
+                <div
+                  className={`${styles.peerCursor} ${styles.cursorSarah}`}
+                  style={{ left: "25%", top: "35%" }}
+                >
                   <MousePointer2 size={16} fill="#3b82f6" color="#3b82f6" />
-                  <span className={styles.cursorTag} style={{ backgroundColor: "#3b82f6" }}>Lithesh (Design)</span>
+                  <span
+                    className={styles.cursorTag}
+                    style={{ backgroundColor: "#3b82f6" }}
+                  >
+                    Lithesh (Design)
+                  </span>
                 </div>
 
-                <div className={`${styles.peerCursor} ${styles.cursorAlex}`} style={{ left: "58%", top: "25%" }}>
+                <div
+                  className={`${styles.peerCursor} ${styles.cursorAlex}`}
+                  style={{ left: "58%", top: "25%" }}
+                >
                   <MousePointer2 size={16} fill="#8b5cf6" color="#8b5cf6" />
-                  <span className={styles.cursorTag} style={{ backgroundColor: "#8b5cf6" }}>Pranav (Dev)</span>
+                  <span
+                    className={styles.cursorTag}
+                    style={{ backgroundColor: "#8b5cf6" }}
+                  >
+                    Pranav (Dev)
+                  </span>
                 </div>
 
-                <div className={`${styles.peerCursor} ${styles.cursorYou}`} style={{ left: "78%", top: "52%" }}>
+                <div
+                  className={`${styles.peerCursor} ${styles.cursorYou}`}
+                  style={{ left: "78%", top: "52%" }}
+                >
                   <MousePointer2 size={16} fill="#10b981" color="#10b981" />
-                  <span className={styles.cursorTag} style={{ backgroundColor: "#10b981" }}>You</span>
+                  <span
+                    className={styles.cursorTag}
+                    style={{ backgroundColor: "#10b981" }}
+                  >
+                    You
+                  </span>
                 </div>
 
                 {/* Mini Floating Bottom Toolbar Preview */}
                 <div className={styles.mockupToolbar}>
-                  <span className={styles.mockupToolDot} style={{ background: "#3b82f6" }} />
+                  <span
+                    className={styles.mockupToolDot}
+                    style={{ background: "#3b82f6" }}
+                  />
                   <span className={styles.mockupToolPill} />
                   <span className={styles.mockupToolPill} />
                   <span className={styles.mockupToolDivider} />
-                  <span className={styles.mockupToolDot} style={{ background: "#ef4444" }} />
-                  <span className={styles.mockupToolDot} style={{ background: "#10b981" }} />
-                  <span className={styles.mockupToolDot} style={{ background: "#f59e0b" }} />
+                  <span
+                    className={styles.mockupToolDot}
+                    style={{ background: "#ef4444" }}
+                  />
+                  <span
+                    className={styles.mockupToolDot}
+                    style={{ background: "#10b981" }}
+                  />
+                  <span
+                    className={styles.mockupToolDot}
+                    style={{ background: "#f59e0b" }}
+                  />
                 </div>
               </div>
             </div>
@@ -208,9 +429,12 @@ const App = () => {
           {/* Value Props & Features Grid */}
           <section className={styles.featuresSection}>
             <div className={styles.featuresHeader}>
-              <h2 className={styles.featuresTitle}>Built for speed, precision, and collaboration</h2>
+              <h2 className={styles.featuresTitle}>
+                Built for speed, precision, and collaboration
+              </h2>
               <p className={styles.featuresSubtitle}>
-                Everything you need to turn thoughts into shared architecture without friction.
+                Everything you need to turn thoughts into shared architecture
+                without friction.
               </p>
             </div>
 
@@ -221,17 +445,25 @@ const App = () => {
                 </div>
                 <h3 className={styles.cardHeading}>60 FPS Real-Time Sync</h3>
                 <p className={styles.cardText}>
-                  Low-latency WebSocket streaming ensures all peer strokes, live cursors, and movements update instantaneously across your entire team.
+                  Low-latency WebSocket streaming ensures all peer strokes, live
+                  cursors, and movements update instantaneously across your
+                  entire team.
                 </p>
               </div>
 
               <div className={styles.featureCard}>
                 <div className={styles.featureIconBox}>
-                  <InfinityIcon size={20} className={styles.featureIconIndigo} />
+                  <InfinityIcon
+                    size={20}
+                    className={styles.featureIconIndigo}
+                  />
                 </div>
-                <h3 className={styles.cardHeading}>Unbounded Infinite Canvas</h3>
+                <h3 className={styles.cardHeading}>
+                  Unbounded Infinite Canvas
+                </h3>
                 <p className={styles.cardText}>
-                  Never run out of space. Fluid multi-touch trackpad gestures, high-precision zooming, and world-coordinate transformations.
+                  Never run out of space. Fluid multi-touch trackpad gestures,
+                  high-precision zooming, and world-coordinate transformations.
                 </p>
               </div>
 
@@ -241,7 +473,9 @@ const App = () => {
                 </div>
                 <h3 className={styles.cardHeading}>Retina Export Engine</h3>
                 <p className={styles.cardText}>
-                  Export your boards to 2x Retina PNGs with customizable background themes or copy vector images directly to your system clipboard.
+                  Export your boards to 2x Retina PNGs with customizable
+                  background themes or copy vector images directly to your
+                  system clipboard.
                 </p>
               </div>
             </div>
@@ -253,7 +487,8 @@ const App = () => {
           <div className={styles.footerContent}>
             <span className={styles.footerBrand}>CrewBoard</span>
             <span className={styles.footerText}>
-              Open-source collaborative whiteboard. Built for engineers & designers.
+              Open-source collaborative whiteboard. Built for engineers &
+              designers.
             </span>
           </div>
         </footer>
@@ -261,10 +496,26 @@ const App = () => {
     );
   }
 
+  if (activeRoom) {
+    return (
+      <div className={styles.appContainer}>
+        <Whiteboard
+          roomId={activeRoom.roomId}
+          token={activeRoom.token}
+          onBackToDashboard={handleBackToDashboard}
+          theme={theme}
+          handleToggleTheme={handleToggleTheme}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.appContainer}>
-      <Whiteboard />
-    </div>
+    <Dashboard
+      onOpenBoard={handleOpenBoard}
+      theme={theme}
+      handleToggleTheme={handleToggleTheme}
+    />
   );
 };
 

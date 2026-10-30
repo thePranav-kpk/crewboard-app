@@ -11,7 +11,7 @@ const registerBoardHandlers = (io, socket) => {
   // Event for joining room
   socket.on("room:join", async ({ roomId, token, key }, callback) => {
     try {
-      const { currentElements, activeUsers } = await joinRoom({
+      const { room, currentElements, activeUsers } = await joinRoom({
         roomId,
         token: token || key,
         socketId: socket.id,
@@ -24,9 +24,18 @@ const registerBoardHandlers = (io, socket) => {
       socket.to(roomId).emit("user:joined", { user: socket.user });
 
       if (typeof callback === "function") {
-        callback({ success: true, currentElements, activeUsers });
+        callback({
+          success: true,
+          roomName: room?.name || "Untitled Board",
+          currentElements,
+          activeUsers,
+        });
       } else {
-        socket.emit("room:joined", { currentElements, activeUsers });
+        socket.emit("room:joined", {
+          roomName: room?.name || "Untitled Board",
+          currentElements,
+          activeUsers,
+        });
       }
     } catch (err) {
       if (typeof callback === "function") {

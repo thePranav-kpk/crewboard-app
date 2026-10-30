@@ -3,6 +3,7 @@ import io from "socket.io-client";
 
 const useSocket = ({
   roomId,
+  token,
   onStrokeReceived,
   onInitialElements,
   onStrokeDeleted,
@@ -12,6 +13,7 @@ const useSocket = ({
   const [isConnected, setIsConnected] = useState(false);
   const [peers, setPeers] = useState([]);
   const [peerCursors, setPeerCursors] = useState({});
+  const [roomName, setRoomName] = useState("");
 
   // On entering a room
   useEffect(() => {
@@ -27,8 +29,9 @@ const useSocket = ({
       setIsConnected(true);
 
       // Event to join a room
-      socket.emit("room:join", { roomId }, (res) => {
+      socket.emit("room:join", { roomId, token }, (res) => {
         if (res.success) {
+          if (res.roomName) setRoomName(res.roomName);
           onInitialElements(res.currentElements);
           setPeers(res.activeUsers);
         }
@@ -110,6 +113,7 @@ const useSocket = ({
     isConnected,
     peers,
     peerCursors,
+    roomName,
     emitStroke,
     emitCursor,
     emitDelete,

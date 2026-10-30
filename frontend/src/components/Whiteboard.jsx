@@ -26,7 +26,13 @@ import styles from "./Whiteboard.module.css";
 const SHAPE_TOOLS = ["rectangle", "circle", "arrow", "line"];
 const isShapeTool = (t) => SHAPE_TOOLS.includes(t);
 
-const Whiteboard = () => {
+const Whiteboard = ({
+  roomId = "general",
+  token = "",
+  onBackToDashboard,
+  theme = "light",
+  handleToggleTheme: onToggleTheme,
+}) => {
   // Reference to Canvas DOM element
   const canvasRef = useRef(null);
 
@@ -54,12 +60,6 @@ const Whiteboard = () => {
     return savedSize ? parseInt(savedSize) : 4;
   });
 
-  // Lazy initial state
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem("theme");
-    return savedTheme ? savedTheme : "light";
-  });
-
   const {
     pan,
     zoom,
@@ -77,12 +77,14 @@ const Whiteboard = () => {
     isConnected,
     peers,
     peerCursors,
+    roomName,
     emitStroke,
     emitCursor,
     emitDelete,
     emitUpdate,
   } = useSocket({
-    roomId: "general", // Room id
+    roomId,
+    token,
     onStrokeReceived: (stroke) => {
       // Add remote stroke to your board
       setElements((prev) => [...prev, stroke]);
@@ -232,11 +234,6 @@ const Whiteboard = () => {
     elementsRef.current = elements;
   }, [elements]);
 
-  // Store theme in localStorage
-  useEffect(() => {
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
   // Store tool, color and size in localStorage
   useEffect(() => {
     localStorage.setItem("tool", tool);
@@ -265,9 +262,12 @@ const Whiteboard = () => {
 
   const handleToggleTheme = () => {
     const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
+
     if (color === "#ffffff" && nextTheme === "light") setColor("#1e1e1e");
     if (color === "#1e1e1e" && nextTheme === "dark") setColor("#ffffff");
+
+    // Call onToggleTheme from App.jsx
+    onToggleTheme?.();
   };
 
   // Calculate the world point
@@ -424,9 +424,12 @@ const Whiteboard = () => {
 
       {/* Render the header */}
       <Header
-        roomId={"general"}
+        roomId={roomId}
+        roomName={roomName}
+        token={token}
         theme={theme}
         handleToggleTheme={handleToggleTheme}
+        onBackToDashboard={onBackToDashboard}
         elements={elements}
       />
 
