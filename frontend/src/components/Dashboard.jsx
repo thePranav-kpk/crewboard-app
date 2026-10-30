@@ -114,11 +114,11 @@ const Dashboard = ({
   return (
     <div
       className={`${styles.dashboardContainer} ${
-        isDark ? styles.dashboardContainerDark : ""
+        isDark ? styles.dark : ""
       }`}
     >
       {/* 1. Navbar */}
-      <header className={`${styles.navbar} ${isDark ? styles.navbarDark : ""}`}>
+      <header className={styles.navbar}>
         <div className={styles.brand}>
           <svg
             className={styles.brandLogo}
@@ -147,20 +147,12 @@ const Dashboard = ({
               opacity="0.8"
             />
           </svg>
-          <span
-            className={`${styles.brandName} ${
-              isDark ? styles.brandNameDark : ""
-            }`}
-          >
-            CrewBoard
-          </span>
+          <span className={styles.brandName}>CrewBoard</span>
         </div>
 
         <div className={styles.navRight}>
           {/* User Profile */}
-          <div
-            className={`${styles.userPill} ${isDark ? styles.userPillDark : ""}`}
-          >
+          <div className={styles.userPill}>
             {user?.picture ? (
               <img
                 src={user.picture}
@@ -180,7 +172,7 @@ const Dashboard = ({
             <button
               type="button"
               onClick={handleToggleTheme}
-              className={`${styles.iconBtn} ${isDark ? styles.iconBtnDark : ""}`}
+              className={styles.iconBtn}
               title={`Switch to ${isDark ? "Light" : "Dark"} mode`}
             >
               {isDark ? <Sun size={17} /> : <Moon size={17} />}
@@ -204,18 +196,8 @@ const Dashboard = ({
         <section className={styles.dashboardHeader}>
           <div className={styles.headerTopRow}>
             <div>
-              <h1
-                className={`${styles.headerTitle} ${
-                  isDark ? styles.headerTitleDark : ""
-                }`}
-              >
-                Recent Boards
-              </h1>
-              <p
-                className={`${styles.headerSubtitle} ${
-                  isDark ? styles.headerSubtitleDark : ""
-                }`}
-              >
+              <h1 className={styles.headerTitle}>Recent Boards</h1>
+              <p className={styles.headerSubtitle}>
                 Collaborative spaces you own or contribute to.
               </p>
             </div>
@@ -229,9 +211,7 @@ const Dashboard = ({
                   placeholder="Filter boards..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`${styles.searchInput} ${
-                    isDark ? styles.searchInputDark : ""
-                  }`}
+                  className={styles.searchInput}
                 />
               </div>
 
@@ -242,7 +222,7 @@ const Dashboard = ({
                 className={styles.newBoardBtn}
               >
                 <Plus size={18} strokeWidth={2.5} />
-                <span>New Board</span>
+                <span>+ New Board</span>
               </button>
             </div>
           </div>
@@ -252,35 +232,19 @@ const Dashboard = ({
         {loading ? (
           <div className={styles.loadingWrapper}>
             <div className={styles.spinner} />
-            <span
-              className={`${styles.headerSubtitle} ${
-                isDark ? styles.headerSubtitleDark : ""
-              }`}
-            >
+            <span className={styles.headerSubtitle}>
               Fetching recent rooms...
             </span>
           </div>
         ) : filteredRooms.length === 0 ? (
-          <div
-            className={`${styles.emptyState} ${
-              isDark ? styles.emptyStateDark : ""
-            }`}
-          >
+          <div className={styles.emptyState}>
             <div className={styles.emptyIconWrapper}>
               <LayoutGrid size={28} />
             </div>
-            <h2
-              className={`${styles.emptyTitle} ${
-                isDark ? styles.emptyTitleDark : ""
-              }`}
-            >
+            <h2 className={styles.emptyTitle}>
               {searchQuery ? "No matching boards found" : "No boards yet"}
             </h2>
-            <p
-              className={`${styles.emptyDesc} ${
-                isDark ? styles.emptyDescDark : ""
-              }`}
-            >
+            <p className={styles.emptyDesc}>
               {searchQuery
                 ? `No boards match "${searchQuery}". Try a different search.`
                 : "Create your first collaborative canvas to sketch diagrams, wireframes, and brainstorm in real-time."}
@@ -305,9 +269,7 @@ const Dashboard = ({
                 <div
                   key={room.roomId}
                   onClick={() => onOpenBoard(room.roomId, room.inviteToken)}
-                  className={`${styles.boardCard} ${
-                    isDark ? styles.boardCardDark : ""
-                  }`}
+                  className={styles.boardCard}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -317,11 +279,7 @@ const Dashboard = ({
                   }}
                 >
                   {/* Card Thumbnail */}
-                  <div
-                    className={`${styles.cardPreview} ${
-                      isDark ? styles.cardPreviewDark : ""
-                    }`}
-                  >
+                  <div className={styles.cardPreview}>
                     <LayoutGrid
                       size={36}
                       className={styles.cardIconWatermark}
@@ -332,22 +290,14 @@ const Dashboard = ({
                   <div className={styles.cardBody}>
                     <div className={styles.cardTitleRow}>
                       <h3
-                        className={`${styles.boardTitle} ${
-                          isDark ? styles.boardTitleDark : ""
-                        }`}
+                        className={styles.boardTitle}
                         title={room.name}
                       >
                         {room.name || "Untitled Board"}
                       </h3>
                       <span
                         className={`${styles.roleBadge} ${
-                          isOwner
-                            ? isDark
-                              ? styles.roleOwnerDark
-                              : styles.roleOwner
-                            : isDark
-                              ? styles.roleMemberDark
-                              : styles.roleMember
+                          isOwner ? styles.roleOwner : styles.roleMember
                         }`}
                       >
                         {isOwner ? "Owner" : "Member"}
@@ -355,11 +305,7 @@ const Dashboard = ({
                     </div>
 
                     {/* Card Footer with relative time & quick actions */}
-                    <div
-                      className={`${styles.cardFooter} ${
-                        isDark ? styles.cardFooterDark : ""
-                      }`}
-                    >
+                    <div className={styles.cardFooter}>
                       <div className={styles.timeInfo}>
                         <Clock size={13} />
                         <span>{formatDate(room.updatedAt)}</span>
@@ -370,9 +316,7 @@ const Dashboard = ({
                         <button
                           type="button"
                           onClick={(e) => handleCopyLink(e, room)}
-                          className={`${styles.cardActionBtn} ${
-                            isDark ? styles.cardActionBtnDark : ""
-                          }`}
+                          className={styles.cardActionBtn}
                           title="Copy share link"
                           aria-label="Copy share link"
                         >
@@ -388,9 +332,7 @@ const Dashboard = ({
                           <button
                             type="button"
                             onClick={(e) => handleDeleteBoard(e, room)}
-                            className={`${styles.cardActionBtn} ${styles.deleteBtn} ${
-                              isDark ? styles.cardActionBtnDark : ""
-                            }`}
+                            className={`${styles.cardActionBtn} ${styles.deleteBtn}`}
                             title="Delete board"
                             aria-label="Delete board"
                           >

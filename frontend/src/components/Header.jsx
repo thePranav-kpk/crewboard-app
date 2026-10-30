@@ -125,26 +125,17 @@ const Header = ({
       {/* 3. User Profile & Logout */}
       {user && (
         <div className={styles.userSection}>
-          {user.picture ? (
+          {user?.picture ? (
             <img
               src={user.picture}
-              alt={user.name || "User"}
+              alt={user?.name || "User"}
               className={styles.avatarImg}
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-                if (e.currentTarget.nextSibling) {
-                  e.currentTarget.nextSibling.style.display = "flex";
-                }
-              }}
             />
-          ) : null}
-
-          <div
-            style={{ display: user.picture ? "none" : "flex" }}
-            className={styles.avatarFallback}
-          >
-            {user.name ? user.name.charAt(0) : "U"}
-          </div>
+          ) : (
+            <div className={styles.avatarFallback}>
+              {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+            </div>
+          )}
 
           <span
             className={`${styles.userName} ${isDark ? styles.userNameDark : ""}`}
