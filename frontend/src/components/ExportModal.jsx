@@ -6,7 +6,7 @@ import {
 } from "../utils/exportCanvas.js";
 import styles from "./ExportModal.module.css";
 
-const ExportModal = ({ elements, theme, handleClose }) => {
+const ExportModal = ({ roomName, elements, theme, handleClose }) => {
   const [background, setBackground] = useState("current");
   const [copied, setCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -15,8 +15,9 @@ const ExportModal = ({ elements, theme, handleClose }) => {
   const isDark = theme === "dark";
 
   const handleDownload = async () => {
+    const fileName = `${roomName?.trim() || "Untitled Board"}.png`;
     setIsDownloading(true);
-    await downloadCanvasImage(elements, background, theme);
+    await downloadCanvasImage(elements, background, theme, fileName);
     setIsDownloading(false);
   };
 

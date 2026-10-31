@@ -11,10 +11,12 @@ import {
   LayoutGrid,
   Check,
   Pencil,
+  Download,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import apiClient from "../services/api";
 import styles from "./Dashboard.module.css";
+import { downloadCanvasImage } from "../utils/exportCanvas";
 
 const formatDate = (updatedAt) => {
   if (!updatedAt) return "";
@@ -51,6 +53,7 @@ const Dashboard = ({
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [copiedRoomId, setCopiedRoomId] = useState(null);
+  const [exportingRoomId, setExportingRoomId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [editingRoomId, setEditingRoomId] = useState(null);
@@ -134,6 +137,21 @@ const Dashboard = ({
     } else if (e.key === "Escape") {
       setEditingRoomId(null);
     }
+  };
+
+  const handleExportBoard = async (e, room) => {
+    e.stopPropagation();
+    const response = await apiClient.get(
+      `/room/${room.roomId}?token=${room.inviteToken}`,
+    );
+    setExportingRoomId(room.roomId);
+
+    setTimeout(() => setExportingRoomId(null), 2000);
+
+    const elements = response.data.room.elements || [];
+    const fileName = `${room?.name?.trim() || "Untitled Board"}.png`;
+
+    downloadCanvasImage(elements, "current", theme, fileName);
   };
 
   return (
@@ -346,6 +364,21 @@ const Dashboard = ({
                             <Check size={14} color="#10b981" />
                           ) : (
                             <Share2 size={14} />
+                          )}
+                        </button>
+
+                        {/* Download Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleExportBoard(e, room)}
+                          className={styles.cardActionBtn}
+                          title="Export Whiteboard"
+                          aria-label="Export Whiteboard"
+                        >
+                          {exportingRoomId === room.roomId ? (
+                            <Check size={14} color="#10b981" />
+                          ) : (
+                            <Download size={14} />
                           )}
                         </button>
 

@@ -452,6 +452,7 @@ const Whiteboard = ({
       {/* Top-Right: Actions (Share, Theme, Export, Profile) */}
       <Header
         roomId={roomId}
+        roomName={roomName}
         token={token}
         theme={theme}
         handleToggleTheme={handleToggleTheme}

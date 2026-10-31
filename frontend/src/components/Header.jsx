@@ -7,6 +7,7 @@ import styles from "./Header.module.css";
 
 const Header = ({
   roomId = "general",
+  roomName,
   token = "",
   theme,
   handleToggleTheme,
@@ -91,6 +92,7 @@ const Header = ({
       {/* Export Popover */}
       {showExport && (
         <ExportModal
+          roomName={roomName}
           elements={elements}
           theme={theme}
           handleClose={() => setShowExport(false)}
