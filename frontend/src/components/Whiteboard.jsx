@@ -441,6 +441,7 @@ const Whiteboard = ({
         theme={theme}
         handleToggleTheme={handleToggleTheme}
         elements={elements}
+        peers={peers}
       />
 
       {/* Render peer cursors */}

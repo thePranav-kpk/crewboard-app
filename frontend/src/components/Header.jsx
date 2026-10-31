@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Share2, Check, Sun, Moon, LogOut, Download } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import ExportModal from "./ExportModal.jsx";
+import ActiveUsers from "./ActiveUsers.jsx";
 import styles from "./Header.module.css";
 
 const Header = ({
@@ -10,6 +11,7 @@ const Header = ({
   theme,
   handleToggleTheme,
   elements = [],
+  peers,
 }) => {
   const { user, logout } = useAuth();
   const [copied, setCopied] = useState(false);
@@ -32,6 +34,13 @@ const Header = ({
     <header
       className={`${styles.headerContainer} ${isDark ? styles.headerContainerDark : ""}`}
     >
+      {/* Active Users */}
+      <ActiveUsers peers={peers} user={user} theme={theme} />
+
+      <div
+        className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`}
+      />
+
       <button
         type="button"
         onClick={handleCopy}
