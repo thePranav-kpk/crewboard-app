@@ -14,6 +14,7 @@ const useSocket = ({
   const [peers, setPeers] = useState([]);
   const [peerCursors, setPeerCursors] = useState({});
   const [roomName, setRoomName] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   // On entering a room
   useEffect(() => {
@@ -34,6 +35,7 @@ const useSocket = ({
           if (res.roomName) setRoomName(res.roomName);
           onInitialElements(res.currentElements);
           setPeers(res.activeUsers);
+          setIsOwner(res.isOwner);
         }
       });
     });
@@ -121,6 +123,7 @@ const useSocket = ({
 
   return {
     isConnected,
+    isOwner,
     peers,
     peerCursors,
     roomName,

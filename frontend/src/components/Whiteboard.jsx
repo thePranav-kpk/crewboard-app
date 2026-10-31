@@ -1,8 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { useRef, useState, useEffect } from "react";
 
-import { screenToWorld, worldToScreen } from "../utils/coordinates.js";
-import { getStrokeBounds } from "../utils/hitTest.js";
+import { screenToWorld } from "../utils/coordinates.js";
 
 import usePanZoom from "../hooks/usePanZoom.js";
 import useSocket from "../hooks/useSocket.js";
@@ -20,6 +19,7 @@ import ZoomControls from "./ZoomControls.jsx";
 import Header from "./Header.jsx";
 import Sidebar from "./Sidebar.jsx";
 import TextOverlay from "./TextOverlay.jsx";
+import BoardTitleBar from "./BoardTitleBar.jsx";
 
 import styles from "./Whiteboard.module.css";
 
@@ -75,6 +75,7 @@ const Whiteboard = ({
 
   const {
     isConnected,
+    isOwner,
     peers,
     peerCursors,
     roomName,
@@ -423,16 +424,23 @@ const Whiteboard = ({
         className={`${styles.canvas} ${tool === "hand" ? styles.cursorGrab : styles.cursorCrosshair}`}
       />
 
-      {/* Render the header */}
-      <Header
+      {/* Top-Left: Navigation & Board Title */}
+      <BoardTitleBar
         roomId={roomId}
         roomName={roomName}
+        isOwner={isOwner}
+        onBackToDashboard={onBackToDashboard}
+        theme={theme}
+        emitRename={emitRename}
+      />
+
+      {/* Top-Right: Actions (Share, Theme, Export, Profile) */}
+      <Header
+        roomId={roomId}
         token={token}
         theme={theme}
         handleToggleTheme={handleToggleTheme}
-        onBackToDashboard={onBackToDashboard}
         elements={elements}
-        emitRename={emitRename}
       />
 
       {/* Render peer cursors */}
