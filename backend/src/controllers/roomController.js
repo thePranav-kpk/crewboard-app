@@ -95,4 +95,32 @@ const deleteRoom = async (req, res) => {
     .json({ success: true, message: "Room deletion has been successful!" });
 };
 
-export { createRoom, getRecentRooms, getRoom, deleteRoom };
+const renameRoomName = async (req, res) => {
+  const room = await Room.findOne({ roomId: req.params.roomId });
+  if (!room) {
+    return res.status(404).json({ message: "No room found" });
+  }
+
+  if (!req.body?.name.trim()) {
+    return res.status(400).json({ message: "New room name must be specified" });
+  }
+
+  const isOwner = room.owner.toString() === req.user.id;
+  if (isOwner) {
+    room.name = req.body.name.trim();
+    room.updatedAt = Date.now();
+    await room.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Room name has been updated successfully!",
+      roomName: room.name,
+    });
+  }
+
+  return res.status(403).json({
+    message: "Access Denied: Only board owner can rename this room",
+  });
+};
+
+export { createRoom, getRecentRooms, getRoom, deleteRoom, renameRoomName };

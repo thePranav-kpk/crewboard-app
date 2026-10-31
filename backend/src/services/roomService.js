@@ -74,6 +74,18 @@ const leaveRoom = ({ roomId, socketId }) => {
   return { activeUsers: getActiveUsers(roomId) };
 };
 
+const renameRoomName = async ({ roomId, name, userId }) => {
+  let room = await Room.findOne({ roomId });
+  if (!room) return;
+
+  if (userId && room.owner.toString() !== userId) return;
+
+  room.name = name.trim();
+  await room.save();
+
+  return { room };
+};
+
 // Persist committed stroke to MongoDB
 const addElement = async ({ roomId, element }) => {
   await Room.updateOne(
@@ -121,4 +133,5 @@ export {
   removeElement,
   updateElements,
   getActiveUsers,
+  renameRoomName,
 };

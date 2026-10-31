@@ -4,6 +4,7 @@ import {
   addElement,
   removeElement,
   updateElements,
+  renameRoomName,
 } from "../services/roomService.js";
 
 // Emit board events to everyone in the room except the sender
@@ -97,6 +98,24 @@ const registerBoardHandlers = (io, socket) => {
     if (socket.currentRoom) {
       updateElements({ roomId: socket.currentRoom, updatedElements });
       socket.to(socket.currentRoom).emit("draw:update", { updatedElements });
+    }
+  });
+
+  // Event for renaming room name
+  socket.on("room:rename", async ({ roomId, name }) => {
+    if (!name?.trim()) return;
+
+    const result = await renameRoomName({
+      roomId,
+      name,
+      userId: socket.user?.id,
+    });
+    if (result) {
+      socket.to(roomId).emit("room:rename", {
+        roomId,
+        name: name.trim(),
+        userId: socket.user?.id,
+      });
     }
   });
 };

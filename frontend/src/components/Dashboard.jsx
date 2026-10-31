@@ -10,6 +10,7 @@ import {
   Moon,
   LayoutGrid,
   Check,
+  Pencil,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import apiClient from "../services/api";
@@ -51,6 +52,9 @@ const Dashboard = ({
   const [loading, setLoading] = useState(false);
   const [copiedRoomId, setCopiedRoomId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [editingRoomId, setEditingRoomId] = useState(null);
+  const [roomName, setRoomName] = useState("");
 
   const { user, logout } = useAuth();
   const isDark = theme === "dark";
@@ -111,11 +115,30 @@ const Dashboard = ({
       room.name?.toLowerCase().includes(searchQuery.toLowerCase()),
     ) || [];
 
+  const handleSaveRoomName = async (room) => {
+    const trimmedValue = roomName.trim();
+    if (trimmedValue) {
+      await apiClient.patch(`/room/${room.roomId}`, { name: trimmedValue });
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.roomId === room.roomId ? { ...r, name: trimmedValue } : r,
+        ),
+      );
+    }
+    setEditingRoomId(null);
+  };
+
+  const handleKeyDown = (e, room) => {
+    if (e.key === "Enter") {
+      handleSaveRoomName(room);
+    } else if (e.key === "Escape") {
+      setEditingRoomId(null);
+    }
+  };
+
   return (
     <div
-      className={`${styles.dashboardContainer} ${
-        isDark ? styles.dark : ""
-      }`}
+      className={`${styles.dashboardContainer} ${isDark ? styles.dark : ""}`}
     >
       {/* 1. Navbar */}
       <header className={styles.navbar}>
@@ -222,7 +245,7 @@ const Dashboard = ({
                 className={styles.newBoardBtn}
               >
                 <Plus size={18} strokeWidth={2.5} />
-                <span>+ New Board</span>
+                <span>New Board</span>
               </button>
             </div>
           </div>
@@ -289,18 +312,38 @@ const Dashboard = ({
                   {/* Card Body */}
                   <div className={styles.cardBody}>
                     <div className={styles.cardTitleRow}>
-                      <h3
-                        className={styles.boardTitle}
-                        title={room.name}
-                      >
-                        {room.name || "Untitled Board"}
-                      </h3>
+                      {editingRoomId === room.roomId ? (
+                        <input
+                          autoFocus
+                          className={styles.cardTitleInput}
+                          value={roomName}
+                          onChange={(e) => setRoomName(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => handleKeyDown(e, room)}
+                          onBlur={() => handleSaveRoomName(room)}
+                        />
+                      ) : (
+                        <h3 className={styles.boardTitle} title={room.name}>
+                          {room.name || "Untitled Board"}
+                        </h3>
+                      )}
                       <span
                         className={`${styles.roleBadge} ${
                           isOwner ? styles.roleOwner : styles.roleMember
                         }`}
                       >
                         {isOwner ? "Owner" : "Member"}
+                        {isOwner && (
+                          <Pencil
+                            size={12}
+                            className={styles.editBadgeIcon}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingRoomId(room.roomId);
+                              setRoomName(room.name || "Untitled Board");
+                            }}
+                          />
+                        )}
                       </span>
                     </div>
 

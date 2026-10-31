@@ -13,7 +13,7 @@ const useSocket = ({
   const [isConnected, setIsConnected] = useState(false);
   const [peers, setPeers] = useState([]);
   const [peerCursors, setPeerCursors] = useState({});
-  const [roomName, setRoomName] = useState("");
+  const [roomName, setRoomName] = useState(null);
 
   // On entering a room
   useEffect(() => {
@@ -87,7 +87,12 @@ const useSocket = ({
       onElementsUpdated(updatedElements);
     });
 
+    socket.on("room:rename", ({ name }) => {
+      setRoomName(name);
+    });
+
     return () => {
+      socket.off("room:rename");
       socket.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -109,6 +114,11 @@ const useSocket = ({
     socketRef.current?.emit("draw:update", { updatedElements });
   };
 
+  const emitRename = (name) => {
+    setRoomName(name);
+    socketRef.current?.emit("room:rename", { roomId, name });
+  };
+
   return {
     isConnected,
     peers,
@@ -118,6 +128,7 @@ const useSocket = ({
     emitCursor,
     emitDelete,
     emitUpdate,
+    emitRename,
   };
 };
 

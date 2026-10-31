@@ -82,6 +82,7 @@ const Whiteboard = ({
     emitCursor,
     emitDelete,
     emitUpdate,
+    emitRename,
   } = useSocket({
     roomId,
     token,
@@ -431,6 +432,7 @@ const Whiteboard = ({
         handleToggleTheme={handleToggleTheme}
         onBackToDashboard={onBackToDashboard}
         elements={elements}
+        emitRename={emitRename}
       />
 
       {/* Render peer cursors */}

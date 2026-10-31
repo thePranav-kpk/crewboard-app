@@ -4,6 +4,7 @@ import {
   getRecentRooms,
   getRoom,
   deleteRoom,
+  renameRoomName,
 } from "../controllers/roomController.js";
 import { authenticateUser } from "../middlewares/authMiddleware.js";
 
@@ -14,6 +15,7 @@ router.get("/recent", authenticateUser, getRecentRooms);
 router
   .route("/:roomId")
   .get(authenticateUser, getRoom)
-  .delete(authenticateUser, deleteRoom);
+  .delete(authenticateUser, deleteRoom)
+  .patch(authenticateUser, renameRoomName);
 
 export default router;

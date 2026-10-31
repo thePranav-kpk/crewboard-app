@@ -406,8 +406,30 @@
   white-space: nowrap;
 }
 
+.cardTitleInput {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--text-main);
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  padding: 2px 8px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cardTitleInput:focus {
+  border-color: var(--focus-border-input);
+  box-shadow: 0 0 0 2px var(--focus-shadow-input);
+}
+
 /* Role Badges */
 .roleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   font-weight: 700;
   padding: 2px 7px;
@@ -427,6 +449,17 @@
   background: var(--role-member-bg);
   color: var(--role-member-color);
   border: 1px solid var(--role-member-border);
+}
+
+.editBadgeIcon {
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.editBadgeIcon:hover {
+  opacity: 1;
+  transform: scale(1.15);
 }
 
 /* Card Footer with Timestamp & Action Buttons */
