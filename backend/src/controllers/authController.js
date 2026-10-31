@@ -14,7 +14,7 @@ const googleLogin = (req, res) => {
     secure: config.NODE_ENV === "production",
     httpOnly: true,
     maxAge: 10 * 60 * 1000,
-    sameSite: "lax",
+    sameSite: config.NODE_ENV === "production" ? "none" : "lax",
   };
 
   // Set the cookie to store state
@@ -62,7 +62,7 @@ const googleCallback = async (req, res) => {
     const options = {
       secure: config.NODE_ENV === "production",
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
 
@@ -130,7 +130,11 @@ const getMe = (req, res) => {
 };
 
 const logout = (req, res) => {
-  res.clearCookie(AUTH_TOKEN_COOKIE);
+  res.clearCookie(AUTH_TOKEN_COOKIE, {
+    // Remove even cross-site cookies
+    secure: config.NODE_ENV === "production",
+    sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+  });
   res.status(200).json({ message: "Logged out successfully" });
 };
 

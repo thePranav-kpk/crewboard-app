@@ -15,6 +15,7 @@ import { connectDB } from "./config/db.js";
 
 // Express server is just a function
 const app = express();
+app.set("trust proxy", 1);
 
 // Create HTTP server
 const httpServer = createServer(app);
