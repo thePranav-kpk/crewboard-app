@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Users } from "lucide-react";
 import styles from "./ActiveUsers.module.css";
 
-const ActiveUsers = ({ peers = [], user, theme = "light" }) => {
+const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
   const [showUsers, setShowUsers] = useState(false);
   const usersRef = useRef(null);
 
@@ -68,6 +68,12 @@ const ActiveUsers = ({ peers = [], user, theme = "light" }) => {
                   <div
                     key={peer.id}
                     className={`${styles.userItem} ${isDark ? styles.userItemDark : ""}`}
+                    onClick={() => {
+                      {
+                        !isCurrentUser && jumpToUser(peer.id);
+                        setShowUsers(false);
+                      }
+                    }}
                   >
                     <div className={styles.avatarContainer}>
                       {peer.picture ? (

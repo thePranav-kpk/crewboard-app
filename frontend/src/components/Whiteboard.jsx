@@ -62,6 +62,7 @@ const Whiteboard = ({
 
   const {
     pan,
+    setPan,
     zoom,
     isPanning,
     handleWheel,
@@ -262,6 +263,20 @@ const Whiteboard = ({
     editingTextId: textInput?.id,
   });
 
+  // To jump to an active user's cursor coordinates
+  const jumpToUser = (userId) => {
+    const peerPoint = peerCursors[userId];
+    if (!peerPoint) return;
+
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+
+    const newPanX = centerX - peerPoint.x * zoom;
+    const newPanY = centerY - peerPoint.y * zoom;
+
+    setPan({ x: newPanX, y: newPanY });
+  };
+
   const handleToggleTheme = () => {
     const nextTheme = theme === "light" ? "dark" : "light";
 
@@ -442,6 +457,7 @@ const Whiteboard = ({
         handleToggleTheme={handleToggleTheme}
         elements={elements}
         peers={peers}
+        jumpToUser={jumpToUser}
       />
 
       {/* Render peer cursors */}

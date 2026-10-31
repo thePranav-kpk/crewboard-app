@@ -12,6 +12,7 @@ const Header = ({
   handleToggleTheme,
   elements = [],
   peers,
+  jumpToUser,
 }) => {
   const { user, logout } = useAuth();
   const [copied, setCopied] = useState(false);
@@ -35,7 +36,12 @@ const Header = ({
       className={`${styles.headerContainer} ${isDark ? styles.headerContainerDark : ""}`}
     >
       {/* Active Users */}
-      <ActiveUsers peers={peers} user={user} theme={theme} />
+      <ActiveUsers
+        peers={peers}
+        user={user}
+        theme={theme}
+        jumpToUser={jumpToUser}
+      />
 
       <div
         className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`}
