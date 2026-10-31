@@ -14,35 +14,13 @@ const LandingPage = ({ onLogin }) => {
       <header className={styles.navbar}>
         <div className={styles.navContainer}>
           <div className={styles.navBrand}>
-            <svg
+            <img
+              src="/logo.jpg"
+              alt="CrewBoard Logo"
               className={styles.brandLogo}
               width="28"
               height="28"
-              viewBox="0 0 32 32"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect x="2" y="2" width="12" height="12" rx="3.5" fill="#3b82f6" />
-              <rect x="18" y="2" width="12" height="12" rx="3.5" fill="#6366f1" />
-              <rect
-                x="2"
-                y="18"
-                width="12"
-                height="12"
-                rx="3.5"
-                fill="#6366f1"
-                opacity="0.8"
-              />
-              <rect
-                x="18"
-                y="18"
-                width="12"
-                height="12"
-                rx="3.5"
-                fill="#3b82f6"
-                opacity="0.8"
-              />
-            </svg>
+            />
             <span className={styles.brandName}>CrewBoard</span>
           </div>
 

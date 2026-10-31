@@ -50,6 +50,8 @@
 
 .brandLogo {
   display: block;
+  border-radius: 7px;
+  object-fit: cover;
 }
 
 .brandName {
