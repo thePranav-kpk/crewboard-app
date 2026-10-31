@@ -281,9 +281,10 @@ const Dashboard = ({
                 >
                   {/* Card Thumbnail */}
                   <div className={styles.cardPreview}>
-                    <LayoutGrid
-                      size={36}
-                      className={styles.cardIconWatermark}
+                    <img
+                      src="/logo.jpg"
+                      alt="Board preview"
+                      className={styles.cardLogoWatermark}
                     />
                   </div>
 

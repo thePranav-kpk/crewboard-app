@@ -110,7 +110,7 @@
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  cursor: pointer;
+  cursor: default;
   user-select: none;
 }
 
@@ -369,16 +369,19 @@
   transition: background-color 0.2s ease;
 }
 
-.cardIconWatermark {
-  color: var(--text-muted);
-  opacity: 0.5;
-  transition: all 0.2s ease;
+.cardLogoWatermark {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  user-select: none;
 }
 
-.boardCard:hover .cardIconWatermark {
-  color: #3b82f6;
-  opacity: 0.9;
+.boardCard:hover .cardLogoWatermark {
   transform: scale(1.1);
+  box-shadow: 0 8px 22px -2px rgba(59, 130, 246, 0.4);
 }
 
 /* Card Body */

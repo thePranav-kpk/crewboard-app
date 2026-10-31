@@ -24,9 +24,49 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, []);
 
-  // Just redirect the Window tab to URL as backend does all the work
+  // Open Google OAuth in a centered popup window and sync session via postMessage
   const login = () => {
-    window.location.href = `${apiClient.defaults.baseURL}/auth/google`;
+    const width = 500;
+    const height = 620;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const popup = window.open(
+      `${apiClient.defaults.baseURL}/auth/google`,
+      "crewboard_google_login",
+      `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no`,
+    );
+
+    // Fallback redirect if browser strictly blocks popups
+    if (!popup || popup.closed || typeof popup.closed === "undefined") {
+      window.location.href = `${apiClient.defaults.baseURL}/auth/google`;
+      return;
+    }
+
+    const handleMessage = async (event) => {
+      const allowedApiOrigin = new URL(apiClient.defaults.baseURL).origin;
+      if (
+        event.origin !== allowedApiOrigin &&
+        event.origin !== window.location.origin
+      ) {
+        return;
+      }
+
+      if (event.data?.type === "OAUTH_AUTH_SUCCESS") {
+        window.removeEventListener("message", handleMessage);
+        try {
+          const response = await apiClient.get("/auth/me");
+          setUser(response.data.user);
+        } catch (err) {
+          console.error("Failed to fetch user after OAuth popup:", err);
+        }
+      } else if (event.data?.type === "OAUTH_AUTH_ERROR") {
+        window.removeEventListener("message", handleMessage);
+        console.error("OAuth authentication error:", event.data.error);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
   };
 
   // Logout function

@@ -71,11 +71,57 @@ const googleCallback = async (req, res) => {
 
     // Clear the cookie storing state
     res.clearCookie(OAUTH_STATE_COOKIE);
-    res.redirect(config.CLIENT_URL);
+
+    // If opened in a popup window, notify the parent opener window and auto-close
+    const successHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Authentication Successful</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        </head>
+        <body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:system-ui,-apple-system,sans-serif;background:#0d0f12;color:#f1f5f9;">
+          <div style="text-align:center;">
+            <p style="font-size:16px;font-weight:600;">Signed in successfully!</p>
+            <p style="font-size:13px;color:#94a3b8;">Closing this window...</p>
+          </div>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: "OAUTH_AUTH_SUCCESS" }, "${config.CLIENT_URL}");
+              window.close();
+            } else {
+              window.location.href = "${config.CLIENT_URL}";
+            }
+          </script>
+        </body>
+      </html>
+    `;
+    return res.status(200).send(successHtml);
   } catch (err) {
-    return res
-      .status(500)
-      .json({ message: "Authentication failed", error: err.message });
+    const errorHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Authentication Failed</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        </head>
+        <body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:system-ui,-apple-system,sans-serif;background:#0d0f12;color:#ef4444;">
+          <div style="text-align:center;">
+            <p style="font-size:16px;font-weight:600;">Authentication Failed</p>
+            <p style="font-size:13px;color:#94a3b8;">Closing this window...</p>
+          </div>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: "OAUTH_AUTH_ERROR", error: "${err.message}" }, "${config.CLIENT_URL}");
+              window.close();
+            } else {
+              window.location.href = "${config.CLIENT_URL}";
+            }
+          </script>
+        </body>
+      </html>
+    `;
+    return res.status(500).send(errorHtml);
   }
 };
 
