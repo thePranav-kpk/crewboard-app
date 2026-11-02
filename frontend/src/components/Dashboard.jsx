@@ -282,7 +282,11 @@ const Dashboard = ({
         ) : (
           <div className={styles.boardsGrid}>
             {filteredRooms.map((room) => {
-              const isOwner = room.owner?._id === user?.id;
+              const isOwner = Boolean(
+                room.owner?._id &&
+                user?.id &&
+                room.owner._id.toString() === user.id.toString(),
+              );
 
               return (
                 <div
