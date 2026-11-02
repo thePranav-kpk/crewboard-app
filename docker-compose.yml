@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  # Redis In-Memory Cache
+  redis:
+    image: redis:alpine
+    container_name: crewboard-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  # Backend API & WebSockets
+  backend:
+    image: pranav1306/crewboard:backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: crewboard-backend
+    ports:
+      - "5000:5000"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    env_file:
+      - ./backend/.env
+    environment:
+      - PORT=5000
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Frontend Web App (Nginx)
+  frontend:
+    image: pranav1306/crewboard:frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: crewboard-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  redis_data:
