@@ -8,7 +8,7 @@ const getGoogleAuthUrl = (state) => {
     response_type: "code",                     // Requests auth code      
     scope: "openid email profile",             // Only these scopes can be accessed by app
     access_type: "offline",                    // Requests a refresh token
-    prompt: "consent",                         // Consent screen to get refresh token
+    prompt: "select_account consent",          // Consent screen to get refresh token
     state: state,                              // Random string to prevent CSRF Attacks     
   };
 
