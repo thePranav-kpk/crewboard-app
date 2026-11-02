@@ -77,9 +77,9 @@ const registerBoardHandlers = (io, socket) => {
   });
 
   // Event for diconnecting
-  socket.on("disconnecting", () => {
+  socket.on("disconnecting", async () => {
     if (socket.currentRoom) {
-      leaveRoom({ roomId: socket.currentRoom, socketId: socket.id });
+      await leaveRoom({ roomId: socket.currentRoom, socketId: socket.id });
       socket
         .to(socket.currentRoom)
         .emit("user:left", { userId: socket.user.id });

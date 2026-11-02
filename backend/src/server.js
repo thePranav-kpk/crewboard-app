@@ -12,6 +12,7 @@ import { Server } from "socket.io";
 import { socketAuth } from "./sockets/socketAuth.js";
 import { registerBoardHandlers } from "./sockets/boardHandler.js";
 import { connectDB } from "./config/db.js";
+import { connectRedis } from "./config/redis.js";
 
 // Express server is just a function
 const app = express();
@@ -56,6 +57,9 @@ app.use("/room", roomRoutes);
 
 // Connect to DB
 connectDB();
+
+// Connect to Redis
+connectRedis();
 
 // Express server & HTTP server listening
 httpServer.listen(config.PORT, () => {
