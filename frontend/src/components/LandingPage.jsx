@@ -4,10 +4,11 @@ import {
   Download,
   MousePointer2,
   Share2,
+  User,
 } from "lucide-react";
 import styles from "./LandingPage.module.css";
 
-const LandingPage = ({ onLogin }) => {
+const LandingPage = ({ onLogin, onGuestLogin }) => {
   return (
     <div className={styles.landingPage}>
       {/* Navigation Bar */}
@@ -105,6 +106,18 @@ const LandingPage = ({ onLogin }) => {
             </svg>
             <span>Continue with Google</span>
           </button>
+
+          {/* Guest Login Button */}
+          <button
+            id="hero-guest-login-btn"
+            onClick={onGuestLogin}
+            className={styles.guestCtaBtn}
+            aria-label="Continue as Guest"
+          >
+            <User size={18} />
+            <span>Continue as Guest</span>
+          </button>
+
           <span className={styles.ctaSubtext}>
             Free & open source • Zero setup • Works in any browser
           </span>
@@ -280,13 +293,21 @@ const LandingPage = ({ onLogin }) => {
 
               {/* Mini Floating Bottom Toolbar Preview */}
               <div className={styles.mockupToolbar}>
-                <span className={`${styles.mockupToolDot} ${styles.mockupToolDotBlue}`} />
+                <span
+                  className={`${styles.mockupToolDot} ${styles.mockupToolDotBlue}`}
+                />
                 <span className={styles.mockupToolPill} />
                 <span className={styles.mockupToolPill} />
                 <span className={styles.mockupToolDivider} />
-                <span className={`${styles.mockupToolDot} ${styles.mockupToolDotRed}`} />
-                <span className={`${styles.mockupToolDot} ${styles.mockupToolDotGreen}`} />
-                <span className={`${styles.mockupToolDot} ${styles.mockupToolDotAmber}`} />
+                <span
+                  className={`${styles.mockupToolDot} ${styles.mockupToolDotRed}`}
+                />
+                <span
+                  className={`${styles.mockupToolDot} ${styles.mockupToolDotGreen}`}
+                />
+                <span
+                  className={`${styles.mockupToolDot} ${styles.mockupToolDotAmber}`}
+                />
               </div>
             </div>
           </div>
@@ -312,21 +333,16 @@ const LandingPage = ({ onLogin }) => {
               <h3 className={styles.cardHeading}>60 FPS Real-Time Sync</h3>
               <p className={styles.cardText}>
                 Low-latency WebSocket streaming ensures all peer strokes, live
-                cursors, and movements update instantaneously across your
-                entire team.
+                cursors, and movements update instantaneously across your entire
+                team.
               </p>
             </div>
 
             <div className={styles.featureCard}>
               <div className={styles.featureIconBox}>
-                <InfinityIcon
-                  size={20}
-                  className={styles.featureIconIndigo}
-                />
+                <InfinityIcon size={20} className={styles.featureIconIndigo} />
               </div>
-              <h3 className={styles.cardHeading}>
-                Unbounded Infinite Canvas
-              </h3>
+              <h3 className={styles.cardHeading}>Unbounded Infinite Canvas</h3>
               <p className={styles.cardText}>
                 Never run out of space. Fluid multi-touch trackpad gestures,
                 high-precision zooming, and world-coordinate transformations.
@@ -340,8 +356,8 @@ const LandingPage = ({ onLogin }) => {
               <h3 className={styles.cardHeading}>Retina Export Engine</h3>
               <p className={styles.cardText}>
                 Export your boards to 2x Retina PNGs with customizable
-                background themes or copy vector images directly to your
-                system clipboard.
+                background themes or copy vector images directly to your system
+                clipboard.
               </p>
             </div>
           </div>

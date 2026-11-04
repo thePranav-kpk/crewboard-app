@@ -40,7 +40,7 @@ const App = () => {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  const { user, loading, login } = useAuth();
+  const { user, loading, login, guestLogin } = useAuth();
 
   const handleToggleTheme = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
@@ -66,7 +66,7 @@ const App = () => {
   }
 
   if (!user) {
-    return <LandingPage onLogin={login} />;
+    return <LandingPage onLogin={login} onGuestLogin={guestLogin} />;
   }
 
   if (activeRoom) {

@@ -76,12 +76,23 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.log("Failed to notify server of logout: ", err.message);
     } finally {
-      setUser(null);      // Logout the user whatsoever
+      setUser(null); // Logout the user whatsoever
+    }
+  };
+
+  // To login as guest
+  const guestLogin = async () => {
+    try {
+      const resposne = await apiClient.post("/auth/guest");
+      setUser(resposne.data.user);
+    } catch (err) {
+      console.log("Failed to login as guest: ", err.message);
+      setUser(null);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, guestLogin }}>
       {children}
     </AuthContext.Provider>
   );

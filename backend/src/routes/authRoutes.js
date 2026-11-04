@@ -4,6 +4,7 @@ import {
   googleLogin,
   getMe,
   logout,
+  guestLogin,
 } from "../controllers/authController.js";
 import { authenticateUser } from "../middlewares/authMiddleware.js";
 
@@ -13,5 +14,6 @@ router.get("/google", googleLogin);
 router.get("/google/callback", googleCallback);
 router.post("/logout", logout);
 router.get("/me", authenticateUser, getMe);
+router.post("/guest", guestLogin);
 
 export default router;

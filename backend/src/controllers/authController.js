@@ -7,6 +7,20 @@ import User from "../models/User.js";
 const OAUTH_STATE_COOKIE = "oauth_state";
 const AUTH_TOKEN_COOKIE = "auth_token";
 
+const CURSOR_COLORS = [
+  "#ef4444",
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#8b5cf6",
+  "#ec4899",
+  "#06b6d4",
+  "#14b8a6",
+];
+
+const GUEST_AVATAR =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+
 const googleLogin = (req, res) => {
   // Random cryptographic string to prevent CSRF attacks
   const state = crypto.randomBytes(32).toString("hex");
@@ -138,4 +152,45 @@ const logout = (req, res) => {
   res.status(200).json({ message: "Logged out successfully" });
 };
 
-export { googleLogin, googleCallback, getMe, logout };
+const guestLogin = async (req, res) => {
+  const id = Math.floor(Math.random() * 1000);
+  const name = "Guest";
+  const picture = GUEST_AVATAR;
+  const color = CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)];
+
+  try {
+    let user = await User.create({ name, picture, isGuest: true });
+
+    const jwt = generateToken({
+      id: user?.id.toString(),
+      name: user.name,
+      picture: user.picture,
+      isGuest: true,
+      color, // Store color as well for guest user
+    });
+
+    const options = {
+      secure: config.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 1 * 24 * 60 * 60 * 1000, // Only 1 day
+    };
+
+    res.cookie(AUTH_TOKEN_COOKIE, jwt, options);
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        picture: user.picture,
+        isGuest: true,
+        color,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+export { googleLogin, googleCallback, getMe, logout, guestLogin };

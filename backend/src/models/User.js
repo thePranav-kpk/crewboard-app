@@ -4,8 +4,9 @@ const UserSchema = new mongoose.Schema(
   {
     googleId: {
       type: String,
-      required: [true, "GoogleId is required"],
       unique: true,
+      // Sparse allows multiple documents to be null (so not unique) and not count in indexing
+      sparse: true,
       index: true,
     },
     name: {
@@ -15,15 +16,19 @@ const UserSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: [true, "Email is required"],
       trim: true,
       unique: true,
+      sparse: true,
       lowercase: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
     picture: {
       type: String,
       default: "",
+    },
+    isGuest: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true },

@@ -108,8 +108,12 @@ const Dashboard = ({
         `Are you sure you want to delete "${room.name || "Untitled Board"}"?`,
       )
     ) {
-      await apiClient.delete(`/room/${room.roomId}`);
-      setRooms((prev) => prev.filter((r) => r.roomId !== room.roomId));
+      try {
+        await apiClient.delete(`/room/${room.roomId}`);
+        setRooms((prev) => prev.filter((r) => r.roomId !== room.roomId));
+      } catch (err) {
+        alert(err.response?.data?.message || "Failed to delete board");
+      }
     }
   };
 
@@ -177,12 +181,22 @@ const Dashboard = ({
                 src={user.picture}
                 alt={user?.name || "User"}
                 className={styles.avatar}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  // If external image fails to load, hide image and show fallback
+                  e.currentTarget.style.display = "none";
+                  if (e.currentTarget.nextSibling) {
+                    e.currentTarget.nextSibling.style.display = "flex";
+                  }
+                }}
               />
-            ) : (
-              <div className={styles.avatarFallback}>
-                {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
-              </div>
-            )}
+            ) : null}
+            <div
+              className={styles.avatarFallback}
+              style={{ display: user?.picture ? "none" : "flex" }}
+            >
+              {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+            </div>
             <span className={styles.userName}>{user?.name}</span>
           </div>
 
@@ -282,10 +296,12 @@ const Dashboard = ({
         ) : (
           <div className={styles.boardsGrid}>
             {filteredRooms.map((room) => {
+              const currentUserId = user?.id || user?._id;
+              const ownerId = room.owner?._id || room.owner;
               const isOwner = Boolean(
-                room.owner?._id &&
-                user?.id &&
-                room.owner._id.toString() === user.id.toString(),
+                ownerId &&
+                currentUserId &&
+                ownerId.toString() === currentUserId.toString(),
               );
 
               return (
