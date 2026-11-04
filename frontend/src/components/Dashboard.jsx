@@ -12,6 +12,7 @@ import {
   Check,
   Pencil,
   Download,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import apiClient from "../services/api";
@@ -43,6 +44,15 @@ const formatDate = (updatedAt) => {
   if (secDiff) return formatUnit(secDiff, "second");
 
   return "Just now";
+};
+
+const formatCreationDate = (createdAt) => {
+  if (!createdAt) return "";
+  return new Date(createdAt).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 };
 
 const Dashboard = ({
@@ -367,8 +377,22 @@ const Dashboard = ({
                     {/* Card Footer with relative time & quick actions */}
                     <div className={styles.cardFooter}>
                       <div className={styles.timeInfo}>
-                        <Clock size={13} />
-                        <span>{formatDate(room.updatedAt)}</span>
+                        <div
+                          className={styles.timeRow}
+                          title={`Created on ${formatCreationDate(room.createdAt)}`}
+                        >
+                          <Calendar size={11} />
+                          <span>
+                            Created {formatCreationDate(room.createdAt)}
+                          </span>
+                        </div>
+                        <div
+                          className={styles.timeRow}
+                          title={`Last updated ${formatDate(room.updatedAt)}`}
+                        >
+                          <Clock size={11} />
+                          <span>Updated {formatDate(room.updatedAt)}</span>
+                        </div>
                       </div>
 
                       <div className={styles.cardActions}>

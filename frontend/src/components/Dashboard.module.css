@@ -478,6 +478,13 @@
 
 .timeInfo {
   display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+}
+
+.timeRow {
+  display: flex;
   align-items: center;
   gap: 5px;
 }
@@ -582,12 +589,15 @@
   .navbar {
     padding: 0 16px;
   }
+
   .mainContent {
     padding: 24px 16px 48px;
   }
+
   .searchWrapper {
     width: 100%;
   }
+
   .newBoardBtn {
     width: 100%;
     justify-content: center;
