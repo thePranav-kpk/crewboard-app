@@ -34,6 +34,15 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Automatically delete guest accounts after 1 day
+UserSchema.index(
+  { createdAt: 1 },
+  {
+    expireAfterSeconds: 1 * 24 * 60 * 60, // 1 day
+    partialFilterExpression: { isGuest: true },
+  },
+);
+
 const User = mongoose.model("User", UserSchema);
 
 export default User;
