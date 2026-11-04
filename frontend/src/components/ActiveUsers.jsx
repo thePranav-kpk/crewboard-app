@@ -61,7 +61,11 @@ const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
               <div className={styles.emptyState}>No collaborators online</div>
             ) : (
               peers.map((peer) => {
-                const isCurrentUser = peer.id === user?.id;
+                const currentId = (user?.id || user?._id)?.toString();
+                const peerId = (peer?.id || peer?._id)?.toString();
+                const isCurrentUser = Boolean(
+                  currentId && peerId && currentId === peerId,
+                );
                 const displayName = peer.name;
 
                 return (
@@ -81,16 +85,27 @@ const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
                           src={peer.picture}
                           alt={displayName || "User"}
                           className={styles.avatarImg}
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            if (e.currentTarget.nextSibling) {
+                              e.currentTarget.nextSibling.style.display =
+                                "flex";
+                            }
+                          }}
                         />
-                      ) : (
-                        <div className={styles.avatarFallback}>
-                          {displayName
-                            ? displayName.charAt(0).toUpperCase()
-                            : "U"}
-                        </div>
-                      )}
+                      ) : null}
+                      <div
+                        className={styles.avatarFallback}
+                        style={{ display: peer.picture ? "none" : "flex" }}
+                      >
+                        {displayName
+                          ? displayName.charAt(0).toUpperCase()
+                          : "U"}
+                      </div>
                       <span
                         className={`${styles.onlineBadge} ${isDark ? styles.onlineBadgeDark : ""}`}
+                        style={{ backgroundColor: peer.color || "#10b981" }}
                       />
                     </div>
 
