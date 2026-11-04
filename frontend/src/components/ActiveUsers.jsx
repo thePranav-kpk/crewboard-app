@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Users } from "lucide-react";
+import { Users, MousePointer2 } from "lucide-react";
 import styles from "./ActiveUsers.module.css";
 
 const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
@@ -20,6 +20,18 @@ const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
 
     return () => window.removeEventListener("pointerdown", handlePointerDown);
   }, []);
+
+  const currentId = (user?.id || user?._id)?.toString();
+
+  // Pin current user ("You") to the very top of the list
+  const sortedPeers = [...peers].sort((a, b) => {
+    const aId = (a?.id || a?._id)?.toString();
+    const bId = (b?.id || b?._id)?.toString();
+
+    if (aId === currentId) return -1; // Float 'You' to the top
+    if (bId === currentId) return 1;
+    return 0;
+  });
 
   return (
     <div ref={usersRef} className={styles.container}>
@@ -57,11 +69,10 @@ const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
           </div>
 
           <div className={styles.userList}>
-            {peers.length === 0 ? (
+            {sortedPeers.length === 0 ? (
               <div className={styles.emptyState}>No collaborators online</div>
             ) : (
-              peers.map((peer) => {
-                const currentId = (user?.id || user?._id)?.toString();
+              sortedPeers.map((peer) => {
                 const peerId = (peer?.id || peer?._id)?.toString();
                 const isCurrentUser = Boolean(
                   currentId && peerId && currentId === peerId,
@@ -105,17 +116,30 @@ const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
                       </div>
                       <span
                         className={`${styles.onlineBadge} ${isDark ? styles.onlineBadgeDark : ""}`}
-                        style={{ backgroundColor: peer.color || "#10b981" }}
                       />
                     </div>
 
                     <div className={styles.userInfo}>
-                      <span
-                        className={`${styles.userName} ${isDark ? styles.userNameDark : ""}`}
-                        title={displayName}
-                      >
-                        {displayName}
-                      </span>
+                      <div className={styles.userNameGroup}>
+                        <span
+                          className={`${styles.userName} ${isDark ? styles.userNameDark : ""}`}
+                          title={displayName}
+                        >
+                          {displayName}
+                        </span>
+                        {peer.color && (
+                          <MousePointer2
+                            size={11}
+                            color={peer.color}
+                            fill={peer.color}
+                            style={{
+                              transform: "rotate(-15deg)",
+                              flexShrink: 0,
+                            }}
+                            title={`Cursor: ${peer.color}`}
+                          />
+                        )}
+                      </div>
                       {isCurrentUser && (
                         <span
                           className={`${styles.youBadge} ${isDark ? styles.youBadgeDark : ""}`}

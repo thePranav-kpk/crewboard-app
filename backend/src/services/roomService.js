@@ -1,6 +1,19 @@
 import Room from "../models/Room.js";
 import { client } from "../config/redis.js";
 
+const CURSOR_COLORS = [
+  "#ef4444", // Red
+  "#3b82f6", // Blue
+  "#10b981", // Emerald
+  "#f59e0b", // Amber
+  "#8b5cf6", // Purple
+  "#ec4899", // Pink
+  "#06b6d4", // Cyan
+  "#f97316", // Orange
+  "#14b8a6", // Teal
+  "#84cc16", // Lime
+];
+
 // Redis Convention for storing elements-> room:${roomId}:elements
 // Redis Convention for storing users-> room:${roomId}:users
 
@@ -67,6 +80,20 @@ const joinRoom = async ({ roomId, token, socketId, user }) => {
         EX: 24 * 60 * 60, // Expires in 24 hrs
       },
     );
+  }
+
+  // Check colors currently taken by active peers in this room
+  const currentActiveUsers = await getActiveUsers(roomId);
+  const takenColors = currentActiveUsers.map((u) => u.color).filter(Boolean);
+
+  // Pick the first color not taken
+  const assignedColor =
+    CURSOR_COLORS.find((c) => !takenColors.includes(c)) ||
+    CURSOR_COLORS[currentActiveUsers.length % CURSOR_COLORS.length];
+
+  // Assign to user
+  if (user) {
+    user.color = assignedColor;
   }
 
   // Add user to active users
