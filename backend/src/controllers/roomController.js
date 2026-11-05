@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import Room from "../models/Room.js";
+import { client } from "../config/redis.js";
 
 const createRoom = async (req, res) => {
   if (!req.body.name) req.body.name = "Untitled Board";
@@ -90,6 +91,15 @@ const deleteRoom = async (req, res) => {
   }
 
   await Room.deleteOne({ roomId: req.params.roomId });
+
+  // Remove elements and users belonging to this room from Redis
+  try {
+    await client.del(`room:${req.params.roomId}:elements`);
+    await client.del(`room:${req.params.roomId}:users`);
+  } catch (err) {
+    console.error("Failed to delete Redis keys for room:", err);
+  }
+
   return res
     .status(200)
     .json({ success: true, message: "Room deletion has been successful!" });
