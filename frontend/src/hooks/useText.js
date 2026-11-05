@@ -10,6 +10,7 @@ const useText = ({
   zoom,
   color,
   size,
+  setColor,
   setSelectedIds,
   setSelectionBox,
   emitStroke,
@@ -39,22 +40,30 @@ const useText = ({
   // Ref to store index of text history
   const textHistoryIdxRef = useRef(-1);
 
-  // Stores text input as it changes
+  // Ref to track if actively editing an open text box
+  const isEditingRef = useRef(false);
+
+  // Focus and initialize text history only when text input first opens
   useEffect(() => {
-    if (textInput && textareaRef.current) {
+    // Stores text input as it changes
+    if (textInput && !isEditingRef.current) {
+      isEditingRef.current = true;
+
       const el = textareaRef.current;
+      if (el) {
+        // Focus the textarea DOM node
+        el.focus();
+        const len = el.value.length;
 
-      // Focus the textarea DOM node
-      el.focus();
+        // Position the cursor at end of text
+        el.setSelectionRange(len, len);
 
-      const len = el.value.length;
-
-      // Position the cursor at end of text
-      el.setSelectionRange(len, len);
-
-      // Initialize text history for this typing session
-      textHistoryRef.current = [textInput.text || ""];
-      textHistoryIdxRef.current = 0;
+        // Initialize text history for this typing session
+        textHistoryRef.current = [textInput.text || ""];
+        textHistoryIdxRef.current = 0;
+      }
+    } else if (!textInput) {
+      isEditingRef.current = false;
     }
   }, [textInput]);
 
@@ -98,6 +107,9 @@ const useText = ({
         color: existingText.color,
         size: existingText.size,
       });
+
+      // Synchronize toolbar color picker with the selected text's color
+      if (existingText.color) setColor(existingText.color);
     } else {
       // Empty text box
       setTextInput({
@@ -106,6 +118,7 @@ const useText = ({
         worldX: worldPoint.x,
         worldY: worldPoint.y,
         text: "",
+        color,
       });
     }
   };
@@ -200,6 +213,7 @@ const useText = ({
           text,
           width,
           height,
+          color,
         };
 
         // Add the action to undo stack and clear redo stack

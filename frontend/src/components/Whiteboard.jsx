@@ -216,6 +216,7 @@ const Whiteboard = ({
     zoom,
     color,
     size,
+    setColor,
     setSelectedIds,
     setSelectionBox,
     emitStroke,

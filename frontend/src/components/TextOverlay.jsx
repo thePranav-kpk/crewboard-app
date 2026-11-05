@@ -25,11 +25,11 @@ const TextOverlay = ({
         left: textInput.screenX,
         top: textInput.screenY,
         color:
-          theme === "dark" && (textInput.color || color) === "#1e1e1e"
+          theme === "dark" && color === "#1e1e1e"
             ? "#ffffff"
-            : theme === "light" && (textInput.color || color) === "#ffffff"
+            : theme === "light" && color === "#ffffff"
               ? "#1e1e1e"
-              : textInput.color || color,
+              : color,
       }}
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
