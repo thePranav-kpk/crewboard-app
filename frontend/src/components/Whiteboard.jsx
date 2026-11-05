@@ -2,6 +2,7 @@
 import { useRef, useState, useEffect } from "react";
 
 import { screenToWorld } from "../utils/coordinates.js";
+import { isStrokeHit } from "../utils/hitTest.js";
 
 import usePanZoom from "../hooks/usePanZoom.js";
 import useSocket from "../hooks/useSocket.js";
@@ -404,15 +405,47 @@ const Whiteboard = ({
     }
   };
 
-  // Double click to edit text box
+  // Double click to select and edit text box or select any other element for moving
   const handleDoubleClick = (e) => {
-    // Only text tool allows double click editing
-    if (tool !== "text") return;
-
     const worldPoint = getWorldPoint(e);
+
+    // If double-clicked an existing text element, open it for editing
     const hitText = handleTextDoubleClick(worldPoint);
     if (hitText) {
+      setTool("text");
       setSelectedIds([]);
+      setSelectionBox(null);
+      return;
+    }
+
+    // Hit test any other canvas stroke or shape from top to bottom
+    const pad = 8 / zoom;
+    const hitElement = [...elements]
+      .reverse()
+      .find((el) => isStrokeHit(el, worldPoint, pad));
+
+    if (hitElement) {
+      // Clean up micro-dot if pen was active during the double-click
+      if (tool === "pen") {
+        setElements((prev) => {
+          const last = prev[prev.length - 1];
+          if (
+            last &&
+            last.id !== hitElement.id &&
+            last.type === "stroke" &&
+            last.points?.length <= 2
+          ) {
+            emitDelete(last.id);
+            return prev.slice(0, -1);
+          }
+
+          return prev;
+        });
+      }
+
+      // Switch to select tool and select the element for immediate moving
+      setTool("select");
+      setSelectedIds([hitElement.id]);
       setSelectionBox(null);
     }
   };
