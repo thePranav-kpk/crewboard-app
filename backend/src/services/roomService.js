@@ -82,6 +82,18 @@ const joinRoom = async ({ roomId, token, socketId, user }) => {
     );
   }
 
+  if (user?.id) {
+    const existingSockets = await client.hGetAll(`room:${roomId}:users`);
+    for (const [sId, uJson] of Object.entries(existingSockets)) {
+      try {
+        const u = JSON.parse(uJson);
+        if (u.id === user.id || u._id === user.id) {
+          await client.hDel(`room:${roomId}:users`, sId);
+        }
+      } catch (_) {}
+    }
+  }
+
   // Check colors currently taken by active peers in this room
   const currentActiveUsers = await getActiveUsers(roomId);
   const takenColors = currentActiveUsers.map((u) => u.color).filter(Boolean);

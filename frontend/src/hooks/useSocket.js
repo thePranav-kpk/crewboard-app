@@ -47,14 +47,18 @@ const useSocket = ({
 
     socket.on("user:joined", ({ user }) => {
       // Add user to active users list
-      setPeers((prev) => [...prev, user]);
+      setPeers((prev) => {
+        const newUserId = user.id || user._id;
+        const filteredUsers = prev.filter((u) => (u.id || u._id) !== newUserId);
+        return [...filteredUsers, user];
+      });
     });
 
     socket.on("user:left", ({ userId }) => {
       // Remove the user from active users list
       setPeers((prev) =>
         prev.filter((peer) => {
-          if (peer._id !== userId) return peer;
+          if ((peer.id || peer._id) !== userId) return peer;
         }),
       );
 
