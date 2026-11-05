@@ -1,0 +1,189 @@
+/* Boards Grid */
+.boardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 22px;
+}
+
+/* Individual Board Card */
+.boardCard {
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 1px solid var(--border-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.boardCard:hover {
+  transform: translateY(-4px);
+  border-color: var(--hover-border-card);
+  box-shadow: var(--hover-shadow-card);
+}
+
+/* Card Thumbnail / Preview Banner */
+.cardPreview {
+  height: 130px;
+  background-color: var(--bg-preview);
+  background-image: radial-gradient(var(--dot-preview) 1px, transparent 1px);
+  background-size: 16px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.cardLogoWatermark {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  user-select: none;
+}
+
+.boardCard:hover .cardLogoWatermark {
+  transform: scale(1.1);
+  box-shadow: 0 8px 22px -2px rgba(59, 130, 246, 0.4);
+}
+
+/* Card Body */
+.cardBody {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cardTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.boardTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardTitleInput {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--text-main);
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  padding: 2px 8px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cardTitleInput:focus {
+  border-color: var(--focus-border-input);
+  box-shadow: 0 0 0 2px var(--focus-shadow-input);
+}
+
+/* Role Badges */
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.roleOwner {
+  background: var(--role-owner-bg);
+  color: var(--role-owner-color);
+  border: 1px solid var(--role-owner-border);
+}
+
+.roleMember {
+  background: var(--role-member-bg);
+  color: var(--role-member-color);
+  border: 1px solid var(--role-member-border);
+}
+
+.editBadgeIcon {
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.editBadgeIcon:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+/* Card Footer with Timestamp & Action Buttons */
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-footer);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.timeInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+}
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cardActionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cardActionBtn:hover {
+  background: var(--action-btn-hover-bg);
+  color: var(--action-btn-hover-color);
+}
+
+.deleteBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}

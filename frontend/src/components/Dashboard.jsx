@@ -2,92 +2,18 @@ import { useEffect, useState } from "react";
 import {
   Plus,
   Search,
-  Share2,
-  Trash2,
-  Clock,
   LogOut,
   Sun,
   Moon,
   LayoutGrid,
-  Check,
-  Pencil,
-  Download,
-  Calendar,
   LogIn,
 } from "lucide-react";
+import JoinBoardModal from "./JoinBoardModal";
+import BoardCard from "./BoardCard";
 import { useAuth } from "../context/AuthContext";
 import apiClient from "../services/api";
 import styles from "./Dashboard.module.css";
 import { downloadCanvasImage } from "../utils/exportCanvas";
-
-const formatDate = (updatedAt) => {
-  if (!updatedAt) return "";
-
-  const date = new Date(updatedAt);
-  const now = new Date();
-
-  const millisecDiff = Math.floor(now - date);
-  const secDiff = Math.floor(millisecDiff / 1000);
-  const minDiff = Math.floor(secDiff / 60);
-  const hourDiff = Math.floor(minDiff / 60);
-  const dateDiff = Math.floor(hourDiff / 24);
-  const monthDiff = Math.floor(dateDiff / 30);
-  const yearDiff = Math.floor(monthDiff / 12);
-
-  const formatUnit = (val, unit) =>
-    `${val} ${val === 1 ? unit : unit + "s"} ago`;
-
-  if (yearDiff) return formatUnit(yearDiff, "year");
-  if (monthDiff) return formatUnit(monthDiff, "month");
-  if (dateDiff) return formatUnit(dateDiff, "day");
-  if (hourDiff) return formatUnit(hourDiff, "hour");
-  if (minDiff) return formatUnit(minDiff, "minute");
-  if (secDiff) return formatUnit(secDiff, "second");
-
-  return "Just now";
-};
-
-const formatCreationDate = (createdAt) => {
-  if (!createdAt) return "";
-  return new Date(createdAt).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-const parseInviteData = (rawText) => {
-  if (!rawText || typeof rawText !== "string") return null;
-  const text = rawText.trim();
-
-  // If pasted an URL
-  if (text.startsWith("http") || text.includes("?token")) {
-    try {
-      const url = new URL(text);
-
-      // Path Name -> /room/{roomId}
-      // Split to -> ["", "room", "{roomId}"]
-      const pathName = url.pathname.split("/");
-      const roomId = pathName.pop();
-
-      // Token -> Query parameter /room/{roomId}?token={token}
-      const token = url.searchParams.get("token");
-
-      return { roomId, token };
-    } catch {
-      // When user types plain text, do nothing and return null
-    }
-  }
-
-  try {
-    const { roomId, token } = JSON.parse(text);
-    if (roomId || token) return { roomId: roomId || "", token: token || "" };
-  } catch {
-    // When user types plain text, do nothing and return null
-  }
-
-  return null;
-};
 
 const Dashboard = ({
   onOpenBoard,
@@ -103,15 +29,10 @@ const Dashboard = ({
   const [editingRoomId, setEditingRoomId] = useState(null);
   const [roomName, setRoomName] = useState("");
 
-  // States for copying roomId, inviteToken
-  const [showJoinModal, setShowJoinModal] = useState(false);
-  const [joinRoomId, setJoinRoomId] = useState("");
-  const [joinRoomToken, setJoinRoomToken] = useState("");
-  const [joinError, setJoinError] = useState("");
-  const [isJoining, setIsJoining] = useState(false);
-
   const { user, logout } = useAuth();
   const isDark = theme === "dark";
+
+  const [showJoinModal, setShowJoinModal] = useState(false);
 
   // Fetch recent rooms on login
   useEffect(() => {
@@ -213,71 +134,6 @@ const Dashboard = ({
     downloadCanvasImage(elements, "current", theme, fileName);
   };
 
-  const handleRoomIdChange = (e) => {
-    const value = e.target.value;
-    setJoinError("");
-
-    const parsed = parseInviteData(value);
-    // If valid parsed data
-    if (parsed) {
-      setJoinRoomId(parsed.roomId);
-      if (parsed.token) setJoinRoomToken(parsed.token);
-    }
-    // If plain text
-    else {
-      setJoinRoomId(value);
-    }
-  };
-
-  const handleRoomTokenChange = (e) => {
-    const value = e.target.value;
-    setJoinError("");
-
-    const parsed = parseInviteData(value);
-    // If valid parsed data
-    if (parsed) {
-      setJoinRoomId(parsed.roomId);
-      if (parsed.token) setJoinRoomToken(parsed.token);
-    }
-    // If plain text
-    else {
-      setJoinRoomToken(value);
-    }
-  };
-
-  const handleJoinSubmit = async () => {
-    const trimmedId = joinRoomId.trim();
-    const trimmedToken = joinRoomToken.trim();
-
-    if (!trimmedId) {
-      setJoinError("Room Id is required");
-      return;
-    }
-    try {
-      setJoinError("");
-      setIsJoining(true);
-
-      const query = trimmedToken
-        ? `?token=${encodeURIComponent(trimmedToken)}`
-        : "";
-
-      const response = await apiClient.get(`/room/${trimmedId}${query}`);
-
-      if (response.data?.room) {
-        onOpenBoard(joinRoomId.trim(), joinRoomToken.trim());
-        setJoinRoomId("");
-        setJoinRoomToken("");
-        setShowJoinModal(false);
-      }
-    } catch (err) {
-      setJoinError(
-        err.response?.data?.message || "Room not found or access denied",
-      );
-    } finally {
-      setIsJoining(false);
-    }
-  };
-
   return (
     <div
       className={`${styles.dashboardContainer} ${isDark ? styles.dark : ""}`}
@@ -323,10 +179,7 @@ const Dashboard = ({
           {/* Join Board Trigger Button */}
           <button
             type="button"
-            onClick={() => {
-              setJoinError("");
-              setShowJoinModal(true);
-            }}
+            onClick={() => setShowJoinModal(true)}
             className={styles.joinNavBtn}
             title="Join an existing board"
           >
@@ -439,133 +292,26 @@ const Dashboard = ({
               );
 
               return (
-                <div
+                <BoardCard
                   key={room.roomId}
-                  onClick={() => onOpenBoard(room.roomId, room.inviteToken)}
-                  className={styles.boardCard}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      onOpenBoard(room.roomId, room.inviteToken);
-                    }
+                  room={room}
+                  isOwner={isOwner}
+                  isEditing={editingRoomId === room.roomId}
+                  editingName={roomName}
+                  onStartRename={(id, name) => {
+                    setEditingRoomId(id);
+                    setRoomName(name);
                   }}
-                >
-                  {/* Card Thumbnail */}
-                  <div className={styles.cardPreview}>
-                    <img
-                      src="/logo.jpg"
-                      alt="Board preview"
-                      className={styles.cardLogoWatermark}
-                    />
-                  </div>
-
-                  {/* Card Body */}
-                  <div className={styles.cardBody}>
-                    <div className={styles.cardTitleRow}>
-                      {editingRoomId === room.roomId ? (
-                        <input
-                          autoFocus
-                          className={styles.cardTitleInput}
-                          value={roomName}
-                          onChange={(e) => setRoomName(e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          onKeyDown={(e) => handleKeyDown(e, room)}
-                          onBlur={() => handleSaveRoomName(room)}
-                        />
-                      ) : (
-                        <h3 className={styles.boardTitle} title={room.name}>
-                          {room.name || "Untitled Board"}
-                        </h3>
-                      )}
-                      <span
-                        className={`${styles.roleBadge} ${
-                          isOwner ? styles.roleOwner : styles.roleMember
-                        }`}
-                      >
-                        {isOwner ? "Owner" : "Member"}
-                        {isOwner && (
-                          <Pencil
-                            size={12}
-                            className={styles.editBadgeIcon}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingRoomId(room.roomId);
-                              setRoomName(room.name || "Untitled Board");
-                            }}
-                          />
-                        )}
-                      </span>
-                    </div>
-
-                    {/* Card Footer with relative time & quick actions */}
-                    <div className={styles.cardFooter}>
-                      <div className={styles.timeInfo}>
-                        <div
-                          className={styles.timeRow}
-                          title={`Created on ${formatCreationDate(room.createdAt)}`}
-                        >
-                          <Calendar size={11} />
-                          <span>
-                            Created {formatCreationDate(room.createdAt)}
-                          </span>
-                        </div>
-                        <div
-                          className={styles.timeRow}
-                          title={`Last updated ${formatDate(room.updatedAt)}`}
-                        >
-                          <Clock size={11} />
-                          <span>Updated {formatDate(room.updatedAt)}</span>
-                        </div>
-                      </div>
-
-                      <div className={styles.cardActions}>
-                        {/* Share Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => handleCopyLink(e, room)}
-                          className={styles.cardActionBtn}
-                          title="Copy share link"
-                          aria-label="Copy share link"
-                        >
-                          {copiedRoomId === room.roomId ? (
-                            <Check size={14} color="#10b981" />
-                          ) : (
-                            <Share2 size={14} />
-                          )}
-                        </button>
-
-                        {/* Download Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => handleExportBoard(e, room)}
-                          className={styles.cardActionBtn}
-                          title="Export Whiteboard"
-                          aria-label="Export Whiteboard"
-                        >
-                          {exportingRoomId === room.roomId ? (
-                            <Check size={14} color="#10b981" />
-                          ) : (
-                            <Download size={14} />
-                          )}
-                        </button>
-
-                        {/* Delete Button (Owner only) */}
-                        {isOwner && (
-                          <button
-                            type="button"
-                            onClick={(e) => handleDeleteBoard(e, room)}
-                            className={`${styles.cardActionBtn} ${styles.deleteBtn}`}
-                            title="Delete board"
-                            aria-label="Delete board"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  onRenameChange={setRoomName}
+                  onRenameKeyDown={handleKeyDown}
+                  onSaveRename={handleSaveRoomName}
+                  onOpenBoard={onOpenBoard}
+                  onCopyLink={handleCopyLink}
+                  isCopied={copiedRoomId === room.roomId}
+                  onExportBoard={handleExportBoard}
+                  isExporting={exportingRoomId === room.roomId}
+                  onDeleteBoard={handleDeleteBoard}
+                />
               );
             })}
           </div>
@@ -573,93 +319,11 @@ const Dashboard = ({
       </main>
 
       {/* 4. Join Board Modal Dialog */}
-      {showJoinModal && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => {
-            setShowJoinModal(false);
-            setJoinError("");
-          }}
-        >
-          <div
-            className={styles.modalCard}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Join a Board</h3>
-              <button
-                type="button"
-                className={styles.modalCloseBtn}
-                onClick={() => {
-                  setShowJoinModal(false);
-                  setJoinError("");
-                }}
-                title="Close"
-                aria-label="Close"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className={styles.modalSubtitle}>
-              Paste a copied invite payload, or enter room details manually.
-            </p>
-
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>
-                Room ID <span className={styles.requiredStar}>*</span>
-              </label>
-              <input
-                className={styles.modalInput}
-                placeholder="Paste payload or enter Room ID"
-                value={joinRoomId}
-                onChange={handleRoomIdChange}
-                onKeyDown={(e) => e.key === "Enter" && handleJoinSubmit()}
-                autoFocus
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>
-                Invite Token{" "}
-                <span className={styles.inputLabelOptional}>
-                  (Optional for existing members)
-                </span>
-              </label>
-              <input
-                className={styles.modalInput}
-                placeholder="Paste payload or enter Token"
-                value={joinRoomToken}
-                onChange={handleRoomTokenChange}
-                onKeyDown={(e) => e.key === "Enter" && handleJoinSubmit()}
-              />
-            </div>
-
-            {joinError && <p className={styles.modalError}>{joinError}</p>}
-
-            <div className={styles.modalActions}>
-              <button
-                type="button"
-                className={styles.cancelBtn}
-                onClick={() => {
-                  setShowJoinModal(false);
-                  setJoinError("");
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={styles.joinSubmitBtn}
-                onClick={handleJoinSubmit}
-                disabled={isJoining}
-              >
-                {isJoining ? "Joining..." : "Join Board"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <JoinBoardModal
+        isOpen={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        onOpenBoard={onOpenBoard}
+      />
     </div>
   );
 };
