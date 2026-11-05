@@ -31,6 +31,7 @@ const registerBoardHandlers = (io, socket) => {
           currentElements,
           activeUsers,
           isOwner: room?.owner?.toString() === socket.user?.id,
+          ownerId: room?.owner?.toString(),
         });
       } else {
         socket.emit("room:joined", {

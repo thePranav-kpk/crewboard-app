@@ -16,6 +16,7 @@ const useSocket = ({
   const [roomName, setRoomName] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
   const [roomError, setRoomError] = useState("");
+  const [ownerId, setOwnerId] = useState("");
 
   // On entering a room
   useEffect(() => {
@@ -37,6 +38,7 @@ const useSocket = ({
           onInitialElements(res.currentElements);
           setPeers(res.activeUsers);
           setIsOwner(res.isOwner);
+          setOwnerId(res.ownerId);
         } else {
           setRoomError(res?.error || "Room not found or access denied");
         }
@@ -136,6 +138,7 @@ const useSocket = ({
   return {
     isConnected,
     isOwner,
+    ownerId,
     peers,
     peerCursors,
     roomName,

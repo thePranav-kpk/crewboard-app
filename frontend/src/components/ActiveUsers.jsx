@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { Users, MousePointer2 } from "lucide-react";
 import styles from "./ActiveUsers.module.css";
 
-const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
+const ActiveUsers = ({
+  peers = [],
+  user,
+  theme = "light",
+  jumpToUser,
+  ownerId,
+}) => {
   const [showUsers, setShowUsers] = useState(false);
   const usersRef = useRef(null);
 
@@ -21,15 +27,15 @@ const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
     return () => window.removeEventListener("pointerdown", handlePointerDown);
   }, []);
 
-  const currentId = (user?.id || user?._id)?.toString();
+  const currentUserId = (user?.id || user?._id)?.toString();
 
   // Pin current user ("You") to the very top of the list
   const sortedPeers = [...peers].sort((a, b) => {
     const aId = (a?.id || a?._id)?.toString();
     const bId = (b?.id || b?._id)?.toString();
 
-    if (aId === currentId) return -1; // Float 'You' to the top
-    if (bId === currentId) return 1;
+    if (aId === currentUserId) return -1; // Float "You" to the top
+    if (bId === currentUserId) return 1;
     return 0;
   });
 
@@ -75,9 +81,10 @@ const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
               sortedPeers.map((peer) => {
                 const peerId = (peer?.id || peer?._id)?.toString();
                 const isCurrentUser = Boolean(
-                  currentId && peerId && currentId === peerId,
+                  currentUserId && peerId && currentUserId === peerId,
                 );
                 const displayName = peer.name;
+                const isOwner = (peer.id || peer._id) === ownerId;
 
                 return (
                   <div
@@ -125,7 +132,7 @@ const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
                           className={`${styles.userName} ${isDark ? styles.userNameDark : ""}`}
                           title={displayName}
                         >
-                          {displayName}
+                          {isCurrentUser ? "You" : displayName}
                         </span>
                         {peer.color && (
                           <MousePointer2
@@ -140,11 +147,11 @@ const ActiveUsers = ({ peers = [], user, theme = "light", jumpToUser }) => {
                           />
                         )}
                       </div>
-                      {isCurrentUser && (
+                      {isOwner && (
                         <span
                           className={`${styles.youBadge} ${isDark ? styles.youBadgeDark : ""}`}
                         >
-                          You
+                          Owner
                         </span>
                       )}
                     </div>

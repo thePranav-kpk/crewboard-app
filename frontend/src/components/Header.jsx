@@ -14,6 +14,7 @@ const Header = ({
   elements = [],
   peers,
   jumpToUser,
+  ownerId,
 }) => {
   const { user, logout } = useAuth();
   const [copied, setCopied] = useState(false);
@@ -43,6 +44,7 @@ const Header = ({
         user={user}
         theme={theme}
         jumpToUser={jumpToUser}
+        ownerId={ownerId}
       />
 
       <div

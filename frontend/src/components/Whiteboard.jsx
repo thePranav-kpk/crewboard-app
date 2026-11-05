@@ -79,6 +79,7 @@ const Whiteboard = ({
   const {
     isConnected,
     isOwner,
+    ownerId,
     peers,
     peerCursors,
     roomName,
@@ -505,6 +506,7 @@ const Whiteboard = ({
         elements={elements}
         peers={peers}
         jumpToUser={jumpToUser}
+        ownerId={ownerId}
       />
 
       {/* Render peer cursors */}
