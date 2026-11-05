@@ -13,6 +13,7 @@ import {
   Pencil,
   Download,
   Calendar,
+  LogIn,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import apiClient from "../services/api";
@@ -55,6 +56,39 @@ const formatCreationDate = (createdAt) => {
   });
 };
 
+const parseInviteData = (rawText) => {
+  if (!rawText || typeof rawText !== "string") return null;
+  const text = rawText.trim();
+
+  // If pasted an URL
+  if (text.startsWith("http") || text.includes("?token")) {
+    try {
+      const url = new URL(text);
+
+      // Path Name -> /room/{roomId}
+      // Split to -> ["", "room", "{roomId}"]
+      const pathName = url.pathname.split("/");
+      const roomId = pathName.pop();
+
+      // Token -> Query parameter /room/{roomId}?token={token}
+      const token = url.searchParams.get("token");
+
+      return { roomId, token };
+    } catch {
+      // When user types plain text, do nothing and return null
+    }
+  }
+
+  try {
+    const { roomId, token } = JSON.parse(text);
+    if (roomId || token) return { roomId: roomId || "", token: token || "" };
+  } catch {
+    // When user types plain text, do nothing and return null
+  }
+
+  return null;
+};
+
 const Dashboard = ({
   onOpenBoard,
   theme = localStorage.getItem("theme") || "light",
@@ -68,6 +102,13 @@ const Dashboard = ({
 
   const [editingRoomId, setEditingRoomId] = useState(null);
   const [roomName, setRoomName] = useState("");
+
+  // States for copying roomId, inviteToken
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [joinRoomId, setJoinRoomId] = useState("");
+  const [joinRoomToken, setJoinRoomToken] = useState("");
+  const [joinError, setJoinError] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
 
   const { user, logout } = useAuth();
   const isDark = theme === "dark";
@@ -102,9 +143,13 @@ const Dashboard = ({
   const handleCopyLink = (e, room) => {
     e.stopPropagation();
 
-    navigator.clipboard.writeText(
-      `${window.location.origin}/room/${room.roomId}?token=${room.inviteToken}`,
-    );
+    // Paste JSON payload storing roomId and token as string
+    const payload = JSON.stringify({
+      roomId: room.roomId,
+      token: room.inviteToken || "",
+    });
+    navigator.clipboard.writeText(payload);
+
     setCopiedRoomId(room.roomId);
 
     setTimeout(() => setCopiedRoomId(null), 2000);
@@ -168,6 +213,71 @@ const Dashboard = ({
     downloadCanvasImage(elements, "current", theme, fileName);
   };
 
+  const handleRoomIdChange = (e) => {
+    const value = e.target.value;
+    setJoinError("");
+
+    const parsed = parseInviteData(value);
+    // If valid parsed data
+    if (parsed) {
+      setJoinRoomId(parsed.roomId);
+      if (parsed.token) setJoinRoomToken(parsed.token);
+    }
+    // If plain text
+    else {
+      setJoinRoomId(value);
+    }
+  };
+
+  const handleRoomTokenChange = (e) => {
+    const value = e.target.value;
+    setJoinError("");
+
+    const parsed = parseInviteData(value);
+    // If valid parsed data
+    if (parsed) {
+      setJoinRoomId(parsed.roomId);
+      if (parsed.token) setJoinRoomToken(parsed.token);
+    }
+    // If plain text
+    else {
+      setJoinRoomToken(value);
+    }
+  };
+
+  const handleJoinSubmit = async () => {
+    const trimmedId = joinRoomId.trim();
+    const trimmedToken = joinRoomToken.trim();
+
+    if (!trimmedId) {
+      setJoinError("Room Id is required");
+      return;
+    }
+    try {
+      setJoinError("");
+      setIsJoining(true);
+
+      const query = trimmedToken
+        ? `?token=${encodeURIComponent(trimmedToken)}`
+        : "";
+
+      const response = await apiClient.get(`/room/${trimmedId}${query}`);
+
+      if (response.data?.room) {
+        onOpenBoard(joinRoomId.trim(), joinRoomToken.trim());
+        setJoinRoomId("");
+        setJoinRoomToken("");
+        setShowJoinModal(false);
+      }
+    } catch (err) {
+      setJoinError(
+        err.response?.data?.message || "Room not found or access denied",
+      );
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
   return (
     <div
       className={`${styles.dashboardContainer} ${isDark ? styles.dark : ""}`}
@@ -209,6 +319,20 @@ const Dashboard = ({
             </div>
             <span className={styles.userName}>{user?.name}</span>
           </div>
+
+          {/* Join Board Trigger Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setJoinError("");
+              setShowJoinModal(true);
+            }}
+            className={styles.joinNavBtn}
+            title="Join an existing board"
+          >
+            <LogIn size={14} />
+            <span>Join Board</span>
+          </button>
 
           {/* Theme Toggle Button */}
           {handleToggleTheme && (
@@ -447,6 +571,95 @@ const Dashboard = ({
           </div>
         )}
       </main>
+
+      {/* 4. Join Board Modal Dialog */}
+      {showJoinModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => {
+            setShowJoinModal(false);
+            setJoinError("");
+          }}
+        >
+          <div
+            className={styles.modalCard}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Join a Board</h3>
+              <button
+                type="button"
+                className={styles.modalCloseBtn}
+                onClick={() => {
+                  setShowJoinModal(false);
+                  setJoinError("");
+                }}
+                title="Close"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className={styles.modalSubtitle}>
+              Paste a copied invite payload, or enter room details manually.
+            </p>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.inputLabel}>
+                Room ID <span className={styles.requiredStar}>*</span>
+              </label>
+              <input
+                className={styles.modalInput}
+                placeholder="Paste payload or enter Room ID"
+                value={joinRoomId}
+                onChange={handleRoomIdChange}
+                onKeyDown={(e) => e.key === "Enter" && handleJoinSubmit()}
+                autoFocus
+              />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.inputLabel}>
+                Invite Token{" "}
+                <span className={styles.inputLabelOptional}>
+                  (Optional for existing members)
+                </span>
+              </label>
+              <input
+                className={styles.modalInput}
+                placeholder="Paste payload or enter Token"
+                value={joinRoomToken}
+                onChange={handleRoomTokenChange}
+                onKeyDown={(e) => e.key === "Enter" && handleJoinSubmit()}
+              />
+            </div>
+
+            {joinError && <p className={styles.modalError}>{joinError}</p>}
+
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => {
+                  setShowJoinModal(false);
+                  setJoinError("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.joinSubmitBtn}
+                onClick={handleJoinSubmit}
+                disabled={isJoining}
+              >
+                {isJoining ? "Joining..." : "Join Board"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

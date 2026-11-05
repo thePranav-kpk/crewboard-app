@@ -23,8 +23,9 @@ const Header = ({
 
   const handleCopy = async () => {
     try {
-      const inviteUrl = `${window.location.origin}/room/${roomId}${token ? `?token=${token}` : ""}`;
-      await navigator.clipboard.writeText(inviteUrl);
+      // Paste JSON payload storing roomId and token as string
+      const payload = JSON.stringify({ roomId, token });
+      await navigator.clipboard.writeText(payload);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
