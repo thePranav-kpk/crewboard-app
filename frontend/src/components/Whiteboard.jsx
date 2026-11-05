@@ -21,6 +21,7 @@ import Header from "./Header.jsx";
 import Sidebar from "./Sidebar.jsx";
 import TextOverlay from "./TextOverlay.jsx";
 import BoardTitleBar from "./BoardTitleBar.jsx";
+import BoardNotFound from "./BoardNotFound.jsx";
 
 import styles from "./Whiteboard.module.css";
 
@@ -81,6 +82,7 @@ const Whiteboard = ({
     peers,
     peerCursors,
     roomName,
+    roomError,
     emitStroke,
     emitCursor,
     emitDelete,
@@ -449,6 +451,16 @@ const Whiteboard = ({
       setSelectionBox(null);
     }
   };
+
+  if (roomError) {
+    return (
+      <BoardNotFound
+        error={roomError}
+        onBackToDashboard={onBackToDashboard}
+        theme={theme}
+      />
+    );
+  }
 
   return (
     <div

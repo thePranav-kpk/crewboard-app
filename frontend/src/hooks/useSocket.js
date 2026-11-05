@@ -15,6 +15,7 @@ const useSocket = ({
   const [peerCursors, setPeerCursors] = useState({});
   const [roomName, setRoomName] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [roomError, setRoomError] = useState("");
 
   // On entering a room
   useEffect(() => {
@@ -36,8 +37,15 @@ const useSocket = ({
           onInitialElements(res.currentElements);
           setPeers(res.activeUsers);
           setIsOwner(res.isOwner);
+        } else {
+          setRoomError(res?.error || "Room not found or access denied");
         }
       });
+    });
+
+    // Event on joining a deleted room or non-existant room or any other error
+    socket.on("room:error", ({ message }) => {
+      setRoomError(message || "Room error");
     });
 
     socket.on("draw:commit", ({ element }) => {
@@ -131,6 +139,7 @@ const useSocket = ({
     peers,
     peerCursors,
     roomName,
+    roomError,
     emitStroke,
     emitCursor,
     emitDelete,
