@@ -30,6 +30,8 @@ const io = new Server(httpServer, {
   cors: corsOptions,
 });
 
+app.set("io", io); // Makes io accessible inside any Express controller via req.app.get("io")
+
 // Use socketAuth middleware to attach user to socket object
 io.use(socketAuth);
 

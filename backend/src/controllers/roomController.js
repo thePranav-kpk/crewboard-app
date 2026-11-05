@@ -100,6 +100,14 @@ const deleteRoom = async (req, res) => {
     console.error("Failed to delete Redis keys for room:", err);
   }
 
+  // Broadcast room delete event to active users
+  const io = req.app.get("io");
+  if (io) {
+    io.to(req.params.roomId).emit("room:delete", {
+      message: "This board has been deleted by the owner",
+    });
+  }
+
   return res
     .status(200)
     .json({ success: true, message: "Room deletion has been successful!" });

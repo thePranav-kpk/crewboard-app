@@ -103,8 +103,14 @@ const useSocket = ({
       onElementsUpdated(updatedElements);
     });
 
+    // Event on room rename
     socket.on("room:rename", ({ name }) => {
       setRoomName(name);
+    });
+
+    // Event on room deletion
+    socket.on("room:delete", ({ message }) => {
+      setRoomError(message);
     });
 
     return () => {
