@@ -1,6 +1,14 @@
 import crypto from "crypto";
 import Room from "../models/Room.js";
-import { client } from "../config/redis.js";
+import {
+  extractRoomMetaData,
+  getRoomMeta,
+  setRoomMeta,
+  getRoomElements,
+  removeRoomCache,
+} from "../utils/redisUtils.js";
+
+// Redis Convention for storing metadata of a room-> room:${roomId}:meta
 
 const createRoom = async (req, res) => {
   if (!req.body.name) req.body.name = "Untitled Board";
@@ -18,6 +26,9 @@ const createRoom = async (req, res) => {
     isPrivate: true,
     elements: [],
   });
+
+  const meta = extractRoomMetaData(room);
+  await setRoomMeta(roomId, meta);
 
   res.status(201).json({ message: "Room created successfully!", room });
 };
@@ -41,8 +52,7 @@ const getRecentRooms = async (req, res) => {
 const getRoom = async (req, res) => {
   if (!req.params.roomId || !req.user.id) return;
 
-  const room = await Room.findOne({ roomId: req.params.roomId });
-
+  const room = await getRoomMeta(req.params.roomId);
   if (!room) {
     return res.status(404).json({ message: "No room found" });
   }
@@ -60,12 +70,19 @@ const getRoom = async (req, res) => {
     // If not a member, add to members array
     if (!isMember) {
       room.members.push(req.user.id);
-      await room.save();
+
+      // Save to Redis and offload saving to MongoDB (remove await) -> No waiting, reduced latency
+      await setRoomMeta(req.params.roomId, room);
+
+      Room.updateOne(
+        { roomId: req.params.roomId },
+        { $addToSet: { members: req.user.id } },
+      ).catch((err) => console.log("Background members update failed: ", err));
     }
 
     return res.status(200).json({
       message: "Joined room successfully!",
-      room,
+      room: { ...room, elements: await getRoomElements(req.params.roomId) },
     });
   }
 
@@ -79,7 +96,7 @@ const deleteRoom = async (req, res) => {
     return res.status(400).json({ message: "roomId is required" });
   }
 
-  const room = await Room.findOne({ roomId: req.params.roomId });
+  const room = await getRoomMeta(req.params.roomId);
   if (!room) {
     return res.status(404).json({ message: "No room found" });
   }
@@ -92,13 +109,8 @@ const deleteRoom = async (req, res) => {
 
   await Room.deleteOne({ roomId: req.params.roomId });
 
-  // Remove elements and users belonging to this room from Redis
-  try {
-    await client.del(`room:${req.params.roomId}:elements`);
-    await client.del(`room:${req.params.roomId}:users`);
-  } catch (err) {
-    console.error("Failed to delete Redis keys for room:", err);
-  }
+  // Remove elements, users and meta data of this room from Redis
+  await removeRoomCache(req.params.roomId);
 
   // Broadcast room delete event to active users
   const io = req.app.get("io");
@@ -114,7 +126,7 @@ const deleteRoom = async (req, res) => {
 };
 
 const renameRoomName = async (req, res) => {
-  const room = await Room.findOne({ roomId: req.params.roomId });
+  const room = await getRoomMeta(req.params.roomId);
   if (!room) {
     return res.status(404).json({ message: "No room found" });
   }
@@ -126,8 +138,14 @@ const renameRoomName = async (req, res) => {
   const isOwner = room.owner.toString() === req.user.id;
   if (isOwner) {
     room.name = req.body.name.trim();
-    room.updatedAt = Date.now();
-    await room.save();
+    room.updatedAt = new Date().toISOString();
+
+    await setRoomMeta(req.params.roomId, room);
+
+    Room.updateOne(
+      { roomId: req.params.roomId },
+      { name: room.name, updatedAt: new Date() },
+    ).catch((err) => console.error("Background room rename failed: ", err));
 
     return res.status(200).json({
       success: true,

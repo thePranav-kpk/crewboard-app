@@ -1,5 +1,12 @@
 import Room from "../models/Room.js";
 import { client } from "../config/redis.js";
+import {
+  getRoomMeta,
+  setRoomMeta,
+  getRoomElements,
+  setRoomElements,
+  extractRoomMetaData,
+} from "../utils/redisUtils.js";
 
 const CURSOR_COLORS = [
   "#ef4444", // Red
@@ -25,7 +32,7 @@ const getActiveUsers = async (roomId) => {
 
 // Join a room: Validates authorization against MongoDB and registers active user
 const joinRoom = async ({ roomId, token, socketId, user }) => {
-  let room = await Room.findOne({ roomId }).select("-elements");
+  let room = await getRoomMeta(roomId);
 
   // Auto-create default public general room if it does not exist yet
   if (!room) {
@@ -38,6 +45,10 @@ const joinRoom = async ({ roomId, token, socketId, user }) => {
         isPrivate: false,
         elements: [],
       });
+
+      // Store in Redis
+      room = extractRoomMetaData(room);
+      await setRoomMeta(roomId, room);
     } else {
       throw new Error("Room not found");
     }
@@ -56,30 +67,14 @@ const joinRoom = async ({ roomId, token, socketId, user }) => {
     // If not a member, add to members in MongoDB
     if (!isMember && user?.id) {
       room.members.push(user.id);
-      await room.save();
+
+      // Save to Redis and offload saving to MongoDB (remove await) -> No waiting, reduced latency
+      await setRoomMeta(roomId, room);
+
+      Room.updateOne({ roomId }, { $addToSet: { members: user.id } }).catch(
+        (err) => console.log("Background members update failed: ", err),
+      );
     }
-  }
-
-  let currentElements;
-  const cachedElements = await client.get(`room:${roomId}:elements`);
-
-  // Cache Hit
-  if (cachedElements) {
-    currentElements = JSON.parse(cachedElements);
-  }
-  // Cache miss
-  else {
-    // Store in Redis
-    const roomData = await Room.findOne({ roomId }).select("elements");
-    currentElements = roomData?.elements || [];
-
-    await client.set(
-      `room:${roomId}:elements`,
-      JSON.stringify(currentElements),
-      {
-        EX: 24 * 60 * 60, // Expires in 24 hrs
-      },
-    );
   }
 
   if (user?.id) {
@@ -104,9 +99,7 @@ const joinRoom = async ({ roomId, token, socketId, user }) => {
     CURSOR_COLORS[currentActiveUsers.length % CURSOR_COLORS.length];
 
   // Assign to user
-  if (user) {
-    user.color = assignedColor;
-  }
+  if (user) user.color = assignedColor;
 
   // Add user to active users
   await client.hSet(
@@ -118,7 +111,7 @@ const joinRoom = async ({ roomId, token, socketId, user }) => {
 
   return {
     room,
-    currentElements,
+    currentElements: await getRoomElements(roomId),
     activeUsers: await getActiveUsers(roomId),
   };
 };
@@ -131,89 +124,79 @@ const leaveRoom = async ({ roomId, socketId }) => {
 };
 
 const renameRoomName = async ({ roomId, name, userId }) => {
-  let room = await Room.findOne({ roomId }).select("owner name");
-  if (!room) return;
+  let room = await getRoomMeta(roomId);
 
+  if (!room) return;
   if (userId && room.owner.toString() !== userId) return;
 
   room.name = name.trim();
-  await room.save();
+  room.updatedAt = new Date().toISOString();
+
+  await setRoomMeta(roomId, room);
+
+  Room.updateOne({ roomId }, { name: room.name, updatedAt: new Date() }).catch(
+    (err) => console.error("Background renameRoomName failed: ", err),
+  );
 
   return { room };
 };
 
 // Persist committed stroke to MongoDB
 const addElement = async ({ roomId, element }) => {
-  // Store in Redis
-  const cachedElements = await client.get(`room:${roomId}:elements`);
-  if (cachedElements) {
-    let elements = JSON.parse(cachedElements);
-    elements.push(element);
+  let elements = await getRoomElements(roomId);
+  if (!elements) return;
 
-    await client.set(`room:${roomId}:elements`, JSON.stringify(elements), {
-      EX: 24 * 60 * 60,
-    });
-  }
+  elements.push(element);
+  await setRoomElements(roomId, elements);
 
-  await Room.updateOne(
+  Room.updateOne(
     { roomId },
     {
       $push: { elements: element },
       $set: { updatedAt: new Date() },
     },
-  );
+  ).catch((err) => console.error("Background addElement failed: ", err));
+
   return element;
 };
 
 // Remove stroke from MongoDB
 const removeElement = async ({ roomId, elementId }) => {
-  const cachedElements = await client.get(`room:${roomId}:elements`);
-  if (cachedElements) {
-    let elements = JSON.parse(cachedElements);
-    elements = elements.filter((element) => element.id !== elementId);
+  let elements = await getRoomElements(roomId);
+  if (!elements) return;
 
-    await client.set(`room:${roomId}:elements`, JSON.stringify(elements), {
-      EX: 24 * 60 * 60,
-    });
-  }
+  elements = elements.filter((element) => element.id !== elementId);
+  await setRoomElements(roomId, elements);
 
-  await Room.updateOne(
+  Room.updateOne(
     { roomId },
     {
       $pull: { elements: { id: elementId } },
       $set: { updatedAt: new Date() },
     },
-  );
+  ).catch((err) => console.error("Background removeElement failed: ", err));
 };
 
 // Update strokes in MongoDB
 const updateElements = async ({ roomId, updatedElements }) => {
   if (!updatedElements || updatedElements.length === 0) return;
 
-  const cachedElements = await client.get(`room:${roomId}:elements`);
-  if (cachedElements) {
-    let elements = JSON.parse(cachedElements);
-    elements = elements.map((element) => {
-      const updated = updatedElements.find((el) => el.id === element.id);
-      return updated || element;
-    });
+  let elements = await getRoomElements(roomId);
+  if (!elements) return;
 
-    await client.set(`room:${roomId}:elements`, JSON.stringify(elements), {
-      EX: 24 * 60 * 60,
-    });
-  }
-
-  const room = await Room.findOne({ roomId });
-  if (!room) return;
-
-  const newElements = room.elements.map((element) => {
+  elements = elements.map((element) => {
     const updated = updatedElements.find((el) => el.id === element.id);
     return updated || element;
   });
 
-  room.elements = newElements;
-  room.updatedAt = new Date();
-  await room.save();
+  await setRoomElements(roomId, elements);
+
+  Room.updateOne(
+    { roomId },
+    {
+      $set: { elements, updatedAt: new Date() },
+    },
+  ).catch((err) => console.error("Background updateElements failed: ", err));
 };
 
 export {
