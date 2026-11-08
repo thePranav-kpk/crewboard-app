@@ -11,6 +11,7 @@ import useEraser from "../hooks/useEraser.js";
 import useShape from "../hooks/useShape.js";
 import useText from "../hooks/useText.js";
 import useCanvasEvents from "../hooks/useCanvasEvents.js";
+import useClipboard from "../hooks/useClipboard.js";
 
 import Toolbar from "./Toolbar.jsx";
 import PeerCursors from "./PeerCursors.jsx";
@@ -226,6 +227,7 @@ const Whiteboard = ({
   });
 
   const {
+    mousePosRef,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
@@ -264,6 +266,17 @@ const Whiteboard = ({
     handleShapePointerUp,
     emitCursor,
     emitDelete,
+  });
+
+  useClipboard({
+    elements,
+    setElements,
+    selectedIds,
+    setSelectedIds,
+    mousePosRef,
+    emitStroke,
+    setUndoStack,
+    setRedoStack,
   });
 
   // Remove the selection box if tool is not select

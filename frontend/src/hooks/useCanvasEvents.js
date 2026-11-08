@@ -43,6 +43,9 @@ const useCanvasEvents = ({
   // Ref to store last timestamp when cursor changed
   const lastCursorEmitRef = useRef(0);
 
+  // Ref to store mouse coordinates
+  const mousePosRef = useRef(null);
+
   // Calculate the world point
   const getWorldPoint = (e) => {
     const canvas = canvasRef.current;
@@ -96,6 +99,7 @@ const useCanvasEvents = ({
   const handlePointerMove = (e) => {
     // Get eraser coordinates
     const worldPoint = getWorldPoint(e);
+    mousePosRef.current = worldPoint;
 
     // Broadcast world-coordinates to peers after 40ms elapse from last cursor movement
     if (Date.now() - lastCursorEmitRef.current > 40) {
@@ -206,6 +210,7 @@ const useCanvasEvents = ({
 
   return {
     getWorldPoint,
+    mousePosRef,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,

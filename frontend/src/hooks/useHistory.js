@@ -75,6 +75,18 @@ const useHistory = ({
 
       // Add to redo stack
       setRedoStack((prev) => [...prev, action]);
+    } else if (action.type === "batch_add") {
+      // Remove the copied elements from canvas
+      const copiedElementsId = action.elements.map((el) => el.id);
+      setElements((prev) =>
+        prev.filter((el) => !copiedElementsId.includes(el.id)),
+      );
+
+      // Broadcast to peers
+      action.elements.forEach((el) => emitDelete(el.id));
+
+      // Add to redo stack
+      setRedoStack((prev) => [...prev, action]);
     }
   };
 
@@ -139,6 +151,15 @@ const useHistory = ({
 
       // Broadcast to peers
       emitUpdate(updatedElements);
+
+      // Add to undo stack
+      setUndoStack((prev) => [...prev, action]);
+    } else if (action.type === "batch_add") {
+      // Add the copied elements back to canvas
+      setElements((prev) => [...prev, ...action.elements]);
+
+      // Broadcast to peers
+      action.elements.forEach((el) => emitStroke(el));
 
       // Add to undo stack
       setUndoStack((prev) => [...prev, action]);
