@@ -21,6 +21,31 @@ const CURSOR_COLORS = [
   "#84cc16", // Lime
 ];
 
+// In-memory queue to prevent race conditions: roomId -> Map(Promise)
+const roomQueues = new Map();
+
+const queueRoomTask = (roomId, task) => {
+  // If no previous task, start a new Promise()
+  const previousTask = roomQueues.get(roomId) || Promise.resolve();
+
+  // Do current task after previous task completed (Chain the tasks)
+  const currentTask = previousTask
+    .then(() => task())
+    .catch((err) => console.error(`Error in room ${roomId} queue:`, err));
+
+  // Store only last queued task which is either running or waiting to run
+  roomQueues.set(roomId, currentTask);
+
+  // If no more tasks, remove roomId
+  currentTask.finally(() => {
+    if (roomQueues.get(roomId) === currentTask) {
+      roomQueues.delete(roomId);
+    }
+  });
+
+  return currentTask;
+};
+
 // Redis Convention for storing elements-> room:${roomId}:elements
 // Redis Convention for storing users-> room:${roomId}:users
 
@@ -143,60 +168,66 @@ const renameRoomName = async ({ roomId, name, userId }) => {
 
 // Persist committed stroke to MongoDB
 const addElement = async ({ roomId, element }) => {
-  let elements = await getRoomElements(roomId);
-  if (!elements) return;
+  return queueRoomTask(roomId, async () => {
+    let elements = await getRoomElements(roomId);
+    if (!elements) return;
 
-  elements.push(element);
-  await setRoomElements(roomId, elements);
+    elements.push(element);
+    await setRoomElements(roomId, elements);
 
-  Room.updateOne(
-    { roomId },
-    {
-      $push: { elements: element },
-      $set: { updatedAt: new Date() },
-    },
-  ).catch((err) => console.error("Background addElement failed: ", err));
+    Room.updateOne(
+      { roomId },
+      {
+        $push: { elements: element },
+        $set: { updatedAt: new Date() },
+      },
+    ).catch((err) => console.error("Background addElement failed: ", err));
 
-  return element;
+    return element;
+  });
 };
 
 // Remove stroke from MongoDB
 const removeElement = async ({ roomId, elementId }) => {
-  let elements = await getRoomElements(roomId);
-  if (!elements) return;
+  return queueRoomTask(roomId, async () => {
+    let elements = await getRoomElements(roomId);
+    if (!elements) return;
 
-  elements = elements.filter((element) => element.id !== elementId);
-  await setRoomElements(roomId, elements);
+    elements = elements.filter((element) => element.id !== elementId);
+    await setRoomElements(roomId, elements);
 
-  Room.updateOne(
-    { roomId },
-    {
-      $pull: { elements: { id: elementId } },
-      $set: { updatedAt: new Date() },
-    },
-  ).catch((err) => console.error("Background removeElement failed: ", err));
+    Room.updateOne(
+      { roomId },
+      {
+        $pull: { elements: { id: elementId } },
+        $set: { updatedAt: new Date() },
+      },
+    ).catch((err) => console.error("Background removeElement failed: ", err));
+  });
 };
 
 // Update strokes in MongoDB
 const updateElements = async ({ roomId, updatedElements }) => {
-  if (!updatedElements || updatedElements.length === 0) return;
+  return queueRoomTask(roomId, async () => {
+    if (!updatedElements || updatedElements.length === 0) return;
 
-  let elements = await getRoomElements(roomId);
-  if (!elements) return;
+    let elements = await getRoomElements(roomId);
+    if (!elements) return;
 
-  elements = elements.map((element) => {
-    const updated = updatedElements.find((el) => el.id === element.id);
-    return updated || element;
+    elements = elements.map((element) => {
+      const updated = updatedElements.find((el) => el.id === element.id);
+      return updated || element;
+    });
+
+    await setRoomElements(roomId, elements);
+
+    Room.updateOne(
+      { roomId },
+      {
+        $set: { elements, updatedAt: new Date() },
+      },
+    ).catch((err) => console.error("Background updateElements failed: ", err));
   });
-
-  await setRoomElements(roomId, elements);
-
-  Room.updateOne(
-    { roomId },
-    {
-      $set: { elements, updatedAt: new Date() },
-    },
-  ).catch((err) => console.error("Background updateElements failed: ", err));
 };
 
 export {
