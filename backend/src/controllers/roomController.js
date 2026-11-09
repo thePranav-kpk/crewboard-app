@@ -41,7 +41,7 @@ const getRecentRooms = async (req, res) => {
     $or: [{ owner: req.user.id }, { members: req.user.id }],
   })
     .select(
-      " roomId name owner inviteToken members isPrivate updatedAt createdAt",
+      " roomId name owner inviteToken members isPrivate isLocked updatedAt createdAt",
     )
     .sort({ updatedAt: -1 })
     .populate("owner", "name email picture");
@@ -57,6 +57,7 @@ const getRoom = async (req, res) => {
     return res.status(404).json({ message: "No room found" });
   }
 
+  const isLocked = room.isLocked;
   const isOwner = room.owner.toString() === req.user.id;
   const isMember = room.members.some(
     (member) => member.toString() === req.user.id,
@@ -64,6 +65,12 @@ const getRoom = async (req, res) => {
   const isValidToken = Boolean(
     req.query.token && room.inviteToken === req.query.token,
   );
+
+  if (isLocked && !isOwner && !isMember) {
+    return res.status(403).json({
+      message: "This board is locked by the owner. New members cannot join.",
+    });
+  }
 
   // To access a room, user must be either an owner or a member or at least have valid invite token
   if (isOwner || isMember || isValidToken) {
@@ -159,4 +166,50 @@ const renameRoomName = async (req, res) => {
   });
 };
 
-export { createRoom, getRecentRooms, getRoom, deleteRoom, renameRoomName };
+const toggleRoomLock = async (req, res) => {
+  const room = await getRoomMeta(req.params.roomId);
+  if (!room) {
+    return res.status(404).json({ message: "No room found" });
+  }
+
+  const isOwner = room.owner.toString() === req.user.id;
+  if (!isOwner) {
+    return res.status(403).json({
+      message: "Access Denied: Only board owner can lock or unlock this room",
+    });
+  }
+
+  room.isLocked = !room.isLocked;
+  await setRoomMeta(req.params.roomId, room);
+
+  // Authoritative and security events emit from Backend (room:delete, room_lock:update)
+  // High-frequency events emit from Frontend (cursor:move)
+
+  // Broadcast room lock update event to active users
+  const io = req.app.get("io");
+  if (io) {
+    io.to(req.params.roomId).emit("room_lock:update", {
+      roomId: req.params.roomId,
+      isLocked: room.isLocked,
+      message: `This board has been ${room.isLocked ? "" : "un"}locked by the owner`,
+    });
+  }
+
+  Room.updateOne(
+    { roomId: req.params.roomId },
+    { isLocked: room.isLocked, updatedAt: new Date() },
+  ).catch((err) => console.error("Background room lock update failed: ", err));
+
+  return res
+    .status(200)
+    .json({ message: "Room lock has been updated successfully!", room });
+};
+
+export {
+  createRoom,
+  getRecentRooms,
+  getRoom,
+  deleteRoom,
+  renameRoomName,
+  toggleRoomLock,
+};

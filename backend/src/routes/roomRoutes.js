@@ -5,6 +5,7 @@ import {
   getRoom,
   deleteRoom,
   renameRoomName,
+  toggleRoomLock,
 } from "../controllers/roomController.js";
 import { authenticateUser } from "../middlewares/authMiddleware.js";
 
@@ -17,5 +18,6 @@ router
   .get(authenticateUser, getRoom)
   .delete(authenticateUser, deleteRoom)
   .patch(authenticateUser, renameRoomName);
+router.patch("/:roomId/lock", authenticateUser, toggleRoomLock);
 
 export default router;

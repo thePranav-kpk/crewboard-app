@@ -81,9 +81,16 @@ const joinRoom = async ({ roomId, token, socketId, user }) => {
 
   // Authorization check for private rooms
   if (room.isPrivate) {
+    const isLocked = room.isLocked;
     const isOwner = room.owner.toString() === user?.id;
     const isMember = room.members.some((m) => m.toString() === user?.id);
     const isValidToken = Boolean(token && room.inviteToken === token);
+
+    if (isLocked && !isOwner && !isMember) {
+      throw new Error(
+        "This board is locked by the owner. New members cannot join.",
+      );
+    }
 
     if (!isOwner && !isMember && !isValidToken) {
       throw new Error("Access Denied: Invalid invite link or unauthorized");

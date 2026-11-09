@@ -9,6 +9,7 @@ const extractRoomMetaData = (room) => {
     roomId: room.roomId,
     name: room.name,
     isPrivate: room.isPrivate,
+    isLocked: room.isLocked,
     owner: room.owner?.toString(),
     inviteToken: room.inviteToken,
     members: (room.members || []).map((m) => m.toString()),

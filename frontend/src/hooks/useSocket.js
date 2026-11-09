@@ -17,6 +17,8 @@ const useSocket = ({
   const [isOwner, setIsOwner] = useState(false);
   const [roomError, setRoomError] = useState("");
   const [ownerId, setOwnerId] = useState("");
+  const [isLocked, setIsLocked] = useState(false);
+  const [inviteToken, setInviteToken] = useState(token || "");
 
   // On entering a room
   useEffect(() => {
@@ -39,6 +41,8 @@ const useSocket = ({
           setPeers(res.activeUsers);
           setIsOwner(res.isOwner);
           setOwnerId(res.ownerId);
+          setIsLocked(res.isLocked);
+          if (res.inviteToken) setInviteToken(res.inviteToken);
         } else {
           setRoomError(res?.error || "Room not found or access denied");
         }
@@ -113,6 +117,11 @@ const useSocket = ({
       setRoomError(message);
     });
 
+    // Event on room lock update
+    socket.on("room_lock:update", ({ isLocked }) => {
+      setIsLocked(isLocked);
+    });
+
     return () => {
       socket.off("room:rename");
       socket.disconnect();
@@ -149,6 +158,10 @@ const useSocket = ({
     peerCursors,
     roomName,
     roomError,
+    isLocked,
+    setIsLocked,
+    inviteToken,
+    setInviteToken,
     emitStroke,
     emitCursor,
     emitDelete,

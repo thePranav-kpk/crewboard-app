@@ -1,13 +1,25 @@
 import { useState } from "react";
-import { Share2, Check, Sun, Moon, LogOut, Download } from "lucide-react";
+import {
+  Share2,
+  Check,
+  Sun,
+  Moon,
+  LogOut,
+  Download,
+  Lock,
+  Unlock,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import ExportModal from "./ExportModal.jsx";
 import ActiveUsers from "./ActiveUsers.jsx";
+import apiClient from "../services/api.js";
 import styles from "./Header.module.css";
 
 const Header = ({
   roomId = "general",
   roomName,
+  isLocked,
+  isOwner,
   token = "",
   theme,
   handleToggleTheme,
@@ -34,6 +46,14 @@ const Header = ({
     }
   };
 
+  const handleToggleLock = async () => {
+    try {
+      await apiClient.patch(`/room/${roomId}/lock`);
+    } catch (err) {
+      console.error("Failed to toggle room lock: ", err);
+    }
+  };
+
   return (
     <header
       className={`${styles.headerContainer} ${isDark ? styles.headerContainerDark : ""}`}
@@ -51,15 +71,41 @@ const Header = ({
         className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`}
       />
 
-      <button
-        type="button"
-        onClick={handleCopy}
-        className={`${styles.shareButton} ${isDark ? styles.shareButtonDark : ""} ${copied ? styles.shareButtonSuccess : ""}`}
-        title="Copy room invite link"
-      >
-        {copied ? <Check size={13} /> : <Share2 size={13} />}
-        <span>{copied ? "Copied!" : "Share"}</span>
-      </button>
+      {/* Display Share button only for owner or if room is not locked */}
+      {isOwner || !isLocked ? (
+        <button
+          type="button"
+          onClick={handleCopy}
+          className={`${styles.shareButton} ${isDark ? styles.shareButtonDark : ""} ${copied ? styles.shareButtonSuccess : ""}`}
+          title="Copy room invite link"
+        >
+          {copied ? <Check size={13} /> : <Share2 size={13} />}
+          <span>{copied ? "Copied!" : "Share"}</span>
+        </button>
+      ) : (
+        <span
+          className={`${styles.lockedBadge} ${isDark ? styles.lockedBadgeDark : ""}`}
+          title="Board locked by owner"
+        >
+          <Lock size={13} /> Locked
+        </span>
+      )}
+
+      {/* Display Room lock button only for owner */}
+      {isOwner && (
+        <button
+          type="button"
+          onClick={handleToggleLock}
+          className={`${styles.iconButton} ${isDark ? styles.iconButtonDark : ""}`}
+          title={
+            isLocked
+              ? "Unlock board (allow new members to join)"
+              : "Lock board (prevent new members)"
+          }
+        >
+          {isLocked ? <Lock size={15} color="#ef4444" /> : <Unlock size={15} />}
+        </button>
+      )}
 
       <div
         className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`}

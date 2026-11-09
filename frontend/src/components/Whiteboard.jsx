@@ -80,6 +80,10 @@ const Whiteboard = ({
     peerCursors,
     roomName,
     roomError,
+    isLocked,
+    setIsLocked,
+    inviteToken,
+    setInviteToken,
     emitStroke,
     emitCursor,
     emitDelete,
@@ -298,6 +302,13 @@ const Whiteboard = ({
     localStorage.setItem("size", size.toString());
   }, [tool, color, size]);
 
+  // Remove token from URL after joining the board (To prevent room sharing after room is locked)
+  useEffect(() => {
+    if (window.location.search.includes("token")) {
+      window.history.replaceState({}, "", `/room/${roomId}`);
+    }
+  }, [roomId]);
+
   // Zooming, sizing and redrawing loop
   useCanvasRender({
     canvasRef,
@@ -388,7 +399,10 @@ const Whiteboard = ({
       <Header
         roomId={roomId}
         roomName={roomName}
-        token={token}
+        isLocked={isLocked}
+        setIsLocked={setIsLocked}
+        isOwner={isOwner}
+        token={inviteToken || token}
         theme={theme}
         handleToggleTheme={handleToggleTheme}
         elements={elements}

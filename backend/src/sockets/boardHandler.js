@@ -30,8 +30,10 @@ const registerBoardHandlers = (io, socket) => {
           roomName: room?.name || "Untitled Board",
           currentElements,
           activeUsers,
+          isLocked: room?.isLocked,
           isOwner: room?.owner?.toString() === socket.user?.id,
           ownerId: room?.owner?.toString(),
+          inviteToken: room?.inviteToken,
         });
       } else {
         socket.emit("room:joined", {
