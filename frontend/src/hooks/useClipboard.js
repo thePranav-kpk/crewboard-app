@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { moveStroke } from "../utils/coordinates.js";
 import { getGroupBounds } from "../utils/hitTest.js";
 
@@ -12,10 +12,8 @@ const useClipboard = ({
   emitStroke,
   setUndoStack,
   setRedoStack,
+  setTool,
 }) => {
-  // Ref to store copied elements
-  const clipboardRef = useRef([]);
-
   const copySelected = () => {
     if (!selectedIds.length) return;
 
@@ -23,15 +21,30 @@ const useClipboard = ({
       selectedIds.includes(el.id),
     );
 
-    // Store in Ref
-    clipboardRef.current = structuredClone(updatedElements);
+    // Copy to local storage
+    try {
+      localStorage.setItem(
+        "crewboard:clipboard",
+        JSON.stringify(updatedElements),
+      );
+    } catch (err) {
+      console.error("Error in copying elements to clipboard: ", err);
+    }
   };
 
   const pasteCopied = (atMouse = true) => {
-    if (!clipboardRef.current.length) return;
+    let copiedElements = [];
+
+    try {
+      const raw = localStorage.getItem("crewboard:clipboard");
+      copiedElements = raw ? JSON.parse(raw) : [];
+    } catch (err) {
+      console.error("Error reading clipboard: ", err);
+    }
+    if (!copiedElements.length) return;
 
     // Returns: { minX, maxX, minY, maxY, width, height }
-    const bounds = getGroupBounds(clipboardRef.current);
+    const bounds = getGroupBounds(copiedElements);
 
     const centerX = bounds.minX + bounds.width / 2;
     const centerY = bounds.minY + bounds.height / 2;
@@ -51,7 +64,7 @@ const useClipboard = ({
     }
 
     // Update id of copied elements (clones) and move them by (dx,dy) from actual element
-    const newElements = clipboardRef.current.map((el) => {
+    const newElements = copiedElements.map((el) => {
       // Copy to new position
       const movedStroke = moveStroke(el, dx, dy);
       return {
@@ -63,8 +76,8 @@ const useClipboard = ({
     // Add clones to actual elements
     setElements((prev) => [...prev, ...newElements]);
 
-    // Store clones in Ref for consecutive copies
-    clipboardRef.current = newElements;
+    // Store clones to local storage for consecutive copies
+    localStorage.setItem("crewboard:clipboard", JSON.stringify(newElements));
 
     // Select the pasted elements to drag them
     setSelectedIds(newElements.map((el) => el.id));
@@ -101,6 +114,16 @@ const useClipboard = ({
         e.preventDefault();
         copySelected();
         pasteCopied(false);
+      }
+      // Ctrl + A -> Select all elements
+      else if (e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        if (!elements.length) return;
+
+        setTool("select");
+
+        // Select all elements
+        setSelectedIds(elements.map((el) => el.id));
       }
     };
 

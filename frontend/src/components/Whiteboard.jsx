@@ -281,6 +281,7 @@ const Whiteboard = ({
     emitStroke,
     setUndoStack,
     setRedoStack,
+    setTool
   });
 
   // Remove the selection box if tool is not select
