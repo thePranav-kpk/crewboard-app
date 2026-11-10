@@ -42,21 +42,11 @@ const Whiteboard = ({
   const elementsRef = useRef(elements);
 
   // Store all current drawing options
-  // Lazy initial state
-  const [tool, setTool] = useState(() => {
-    const savedTool = localStorage.getItem("tool");
-    return savedTool ? savedTool : "pen";
-  });
-
-  const [color, setColor] = useState(() => {
-    const savedColor = localStorage.getItem("color");
-    return savedColor ? savedColor : "#1e1e1e";
-  });
-
-  const [size, setSize] = useState(() => {
-    const savedSize = localStorage.getItem("size");
-    return savedSize ? parseInt(savedSize) : 4;
-  });
+  const [tool, setTool] = useState("pen");
+  const [color, setColor] = useState(() =>
+    theme === "light" ? "#1e1e1e" : "#ffffff",
+  );
+  const [size, setSize] = useState(4);
 
   const {
     pan,
@@ -298,13 +288,6 @@ const Whiteboard = ({
   useEffect(() => {
     elementsRef.current = elements;
   }, [elements]);
-
-  // Store tool, color and size in localStorage
-  useEffect(() => {
-    localStorage.setItem("tool", tool);
-    localStorage.setItem("color", color);
-    localStorage.setItem("size", size.toString());
-  }, [tool, color, size]);
 
   // Remove token from URL after joining the board (To prevent room sharing after room is locked)
   useEffect(() => {
