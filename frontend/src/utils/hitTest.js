@@ -248,10 +248,40 @@ const isStrokeInBox = (stroke, start, current) => {
   );
 };
 
+// Get the corner which is being dragged
+const getHitHandle = (worldPoint, bounds, zoom) => {
+  if (!bounds) return null;
+
+  const pad = 6 / zoom;
+  const handleRadius = 8 / zoom;
+
+  // Define (x,y) for corners with some padding
+  const handles = {
+    tl: { x: bounds.minX - pad, y: bounds.minY - pad },
+    tr: { x: bounds.maxX + pad, y: bounds.minY - pad },
+    br: { x: bounds.maxX + pad, y: bounds.maxY + pad },
+    bl: { x: bounds.minX - pad, y: bounds.maxY + pad },
+  };
+
+  for (const corner in handles) {
+    // Return the corner from which worldPoint is within its distance
+    if (
+      Math.hypot(
+        worldPoint.x - handles[corner].x,
+        worldPoint.y - handles[corner].y,
+      ) <= handleRadius
+    )
+      return corner;
+  }
+
+  return null;
+};
+
 export {
   distanceToSegment,
   isStrokeHit,
   isStrokeInBox,
   getStrokeBounds,
   getGroupBounds,
+  getHitHandle,
 };

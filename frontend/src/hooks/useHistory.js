@@ -87,6 +87,22 @@ const useHistory = ({
 
       // Add to redo stack
       setRedoStack((prev) => [...prev, action]);
+    } else if (action.type === "batch_resize") {
+      // Restore elements to actual size
+      setElements((prev) =>
+        prev.map((element) => {
+          const resizedElement = action.previous.find(
+            (el) => el.id === element.id,
+          );
+          return resizedElement || element;
+        }),
+      );
+
+      // Broadcast to peers
+      emitUpdate(action.previous);
+
+      // Add to redo stack
+      setRedoStack((prev) => [...prev, action]);
     }
   };
 
@@ -160,6 +176,22 @@ const useHistory = ({
 
       // Broadcast to peers
       action.elements.forEach((el) => emitStroke(el));
+
+      // Add to undo stack
+      setUndoStack((prev) => [...prev, action]);
+    } else if (action.type === "batch_resize") {
+      // Restore elements to new size
+      setElements((prev) =>
+        prev.map((element) => {
+          const resizedElement = action.current.find(
+            (el) => el.id === element.id,
+          );
+          return resizedElement || element;
+        }),
+      );
+
+      // Broadcast to peers
+      emitUpdate(action.current);
 
       // Add to undo stack
       setUndoStack((prev) => [...prev, action]);

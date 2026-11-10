@@ -9,7 +9,6 @@ const useText = ({
   pan,
   zoom,
   color,
-  size,
   setColor,
   setSelectedIds,
   setSelectionBox,
@@ -105,7 +104,11 @@ const useText = ({
         worldY: existingText.y,
         text: existingText.text,
         color: existingText.color,
-        size: existingText.size,
+        fontSize:
+          existingText.fontSize ||
+          (existingText.size && existingText.size >= 10
+            ? existingText.size
+            : 24),
       });
 
       // Synchronize toolbar color picker with the selected text's color
@@ -119,6 +122,7 @@ const useText = ({
         worldY: worldPoint.y,
         text: "",
         color,
+        fontSize: 24,
       });
     }
   };
@@ -170,12 +174,12 @@ const useText = ({
   };
 
   // Helper to get width and height
-  const getWidthHeight = (text) => {
+  const getWidthHeight = (text, fontSize = 24) => {
     // Caclulate no. of lines
     const lines = text.split("\n");
 
     const ctx = canvasRef.current.getContext("2d");
-    ctx.font = "24px sans-serif";
+    ctx.font = `${fontSize}px sans-serif`;
 
     // Width of text box = Max. width of all lines
     const width = Math.max(
@@ -184,7 +188,7 @@ const useText = ({
     );
 
     // Height of text box = No. of lines * Height of each line
-    const height = lines.length * 30;
+    const height = lines.length * Math.round(fontSize * 1.25);
 
     return { width, height };
   };
@@ -205,7 +209,10 @@ const useText = ({
       const existing = elements.find((el) => el.id === textInput.id);
 
       if (text.length > 0) {
-        const { width, height } = getWidthHeight(text);
+        const fontSize =
+          existing?.fontSize ||
+          (existing?.size && existing.size >= 10 ? existing.size : 24);
+        const { width, height } = getWidthHeight(text, fontSize);
 
         // Updated element
         const updated = {
@@ -214,6 +221,7 @@ const useText = ({
           width,
           height,
           color,
+          fontSize,
         };
 
         // Add the action to undo stack and clear redo stack
@@ -251,7 +259,8 @@ const useText = ({
     }
     // New text box
     else if (text.length > 0) {
-      const { width, height } = getWidthHeight(text);
+      const fontSize = textInput.fontSize || 24;
+      const { width, height } = getWidthHeight(text, fontSize);
 
       // New element
       const element = {
@@ -263,7 +272,7 @@ const useText = ({
         width,
         height,
         color,
-        size,
+        fontSize,
       };
 
       // Add the action to undo stack and clear redo stack

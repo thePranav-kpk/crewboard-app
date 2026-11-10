@@ -16,8 +16,6 @@ const getLineWidth = (stroke) => {
 };
 
 // Helper for text rendering
-const TEXT_FONT = "24px sans-serif";
-const TEXT_LINE_HEIGHT = 30;
 const getTextLines = (text) => text.split("\n");
 
 // Take a 2D Canvas context and paint a stroke object
@@ -25,15 +23,20 @@ const renderStroke = (ctx, stroke, theme) => {
   const strokeColor = getColor(stroke, theme);
 
   if (stroke.type === "text") {
-    ctx.font = TEXT_FONT;
+    const fontSize =
+      stroke.fontSize ||
+      (stroke.size && stroke.size >= 10 ? stroke.size : 24);
+    const lineHeight = Math.round(fontSize * 1.25);
+
+    ctx.font = `${fontSize}px sans-serif`;
     ctx.fillStyle = strokeColor;
     ctx.textBaseline = "top";
 
     const lines = getTextLines(stroke.text);
 
-    // Height of each line gets increased by 30
+    // Height of each line gets increased by lineHeight
     lines.forEach((line, index) =>
-      ctx.fillText(line, stroke.x, stroke.y + index * TEXT_LINE_HEIGHT),
+      ctx.fillText(line, stroke.x, stroke.y + index * lineHeight),
     );
     return;
   }
@@ -104,4 +107,4 @@ const renderStroke = (ctx, stroke, theme) => {
   ctx.stroke();
 };
 
-export { renderStroke, getTextLines, TEXT_FONT, TEXT_LINE_HEIGHT };
+export { renderStroke, getTextLines };

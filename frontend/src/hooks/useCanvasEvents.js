@@ -107,9 +107,9 @@ const useCanvasEvents = ({
       lastCursorEmitRef.current = Date.now();
     }
 
-    if (tool === "select" && e.buttons === 1) {
-      // Indicates dragging so every point changes its position evenly
-      handleSelectionPointerMove(worldPoint);
+    if (tool === "select") {
+      // Indicates dragging so every point changes its position evenly either for resizing or relocating
+      handleSelectionPointerMove(worldPoint, e);
     }
 
     if (tool === "eraser" && e.buttons === 1) {

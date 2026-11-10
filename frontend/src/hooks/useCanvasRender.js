@@ -96,6 +96,27 @@ const useCanvasRender = ({
             bounds.height + pad * 2,
           );
 
+          // Draw the 4 corner resize handles
+          const handleSize = 8 / zoom;
+          const half = handleSize / 2;
+
+          const corners = [
+            { x: bounds.minX - pad, y: bounds.minY - pad },
+            { x: bounds.maxX + pad, y: bounds.minY - pad },
+            { x: bounds.maxX + pad, y: bounds.maxY + pad },
+            { x: bounds.minX - pad, y: bounds.maxY + pad },
+          ];
+
+          ctx.fillStyle = "#ffffff";
+          ctx.strokeStyle = "#3b82f6";
+          ctx.lineWidth = 1.5 / zoom;
+          ctx.setLineDash([]);
+
+          corners.forEach((c) => {
+            ctx.fillRect(c.x - half, c.y - half, handleSize, handleSize);
+            ctx.strokeRect(c.x - half, c.y - half, handleSize, handleSize);
+          });
+
           ctx.restore();
         }
       }

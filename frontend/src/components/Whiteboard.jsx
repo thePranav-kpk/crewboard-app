@@ -153,6 +153,7 @@ const Whiteboard = ({
     emitUpdate,
     setUndoStack,
     setRedoStack,
+    canvasRef,
   });
 
   const {
@@ -219,7 +220,6 @@ const Whiteboard = ({
     pan,
     zoom,
     color,
-    size,
     setColor,
     setSelectedIds,
     setSelectionBox,
@@ -281,7 +281,7 @@ const Whiteboard = ({
     emitStroke,
     setUndoStack,
     setRedoStack,
-    setTool
+    setTool,
   });
 
   // Remove the selection box if tool is not select
@@ -289,6 +289,9 @@ const Whiteboard = ({
     if (tool !== "select") {
       setSelectedIds([]);
       setSelectionBox(null);
+      if (canvasRef.current) {
+        canvasRef.current.style.cursor = "";
+      }
     }
   }, [tool, setSelectedIds, setSelectionBox]);
 

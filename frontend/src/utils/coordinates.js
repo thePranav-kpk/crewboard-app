@@ -52,4 +52,84 @@ const moveStroke = (stroke, dx, dy) => {
   };
 };
 
-export { screenToWorld, worldToScreen, moveStroke };
+// Resize the elements when dragged
+// Actual Bounds -> Actual Bounding box
+// New Bounds -> New Bounding box
+const resizeElements = (actualElements, actualBounds, newBounds) => {
+  const actualWidth = actualBounds.maxX - actualBounds.minX;
+  const actualHeight = actualBounds.maxY - actualBounds.minY;
+  const newWidth = newBounds.maxX - newBounds.minX;
+  const newHeight = newBounds.maxY - newBounds.minY;
+
+  if (actualWidth === 0 && actualHeight === 0) return actualElements;
+
+  const scaleX = actualWidth > 0 ? newWidth / actualWidth : 1;
+  const scaleY = actualHeight > 0 ? newHeight / actualHeight : 1;
+
+  // Normalized Factor for x = (x - minX) / width
+  // New Point,x = minX + normalizedFactorX * newWidth
+
+  // Normalized Factor for y = (y - minY) / height
+  // New Point,y = minY + normalizedFactorY * newHeight
+
+  // Mapping helpers to resize every point
+  const mapX = (x) =>
+    actualWidth > 0
+      ? newBounds.minX + ((x - actualBounds.minX) / actualWidth) * newWidth
+      : x;
+
+  const mapY = (y) =>
+    actualHeight > 0
+      ? newBounds.minY + ((y - actualBounds.minY) / actualHeight) * newHeight
+      : y;
+
+  return actualElements.map((el) => {
+    if (el.type === "rectangle") {
+      return {
+        ...el,
+        x: mapX(el.x),
+        y: mapY(el.y),
+        width: el.width * scaleX,
+        height: el.height * scaleY,
+      };
+    } else if (el.type === "text") {
+      const currentFontSize =
+        el.fontSize || (el.size && el.size >= 10 ? el.size : 24);
+      const scale = (scaleX + scaleY) / 2;
+      const newFontSize = Math.max(12, Math.round(currentFontSize * scale));
+      const fontScale = newFontSize / currentFontSize;
+
+      return {
+        ...el,
+        x: mapX(el.x),
+        y: mapY(el.y),
+        width: el.width * fontScale,
+        height: el.height * fontScale,
+        // Scale the font as well for text element
+        fontSize: newFontSize,
+      };
+    } else if (el.type === "circle") {
+      return {
+        ...el,
+        centerX: mapX(el.centerX),
+        centerY: mapY(el.centerY),
+        radius: Math.max(5, el.radius * ((scaleX + scaleY) / 2)),
+      };
+    } else if (el.type === "arrow" || el.type === "line") {
+      return {
+        ...el,
+        startX: mapX(el.startX),
+        startY: mapY(el.startY),
+        endX: mapX(el.endX),
+        endY: mapY(el.endY),
+      };
+    }
+    // Resize the stroke
+    return {
+      ...el,
+      points: el.points?.map((p) => ({ x: mapX(p.x), y: mapY(p.y) })) || [],
+    };
+  });
+};
+
+export { screenToWorld, worldToScreen, moveStroke, resizeElements };
