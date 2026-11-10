@@ -366,6 +366,26 @@ const Whiteboard = ({
     );
   }
 
+  // Get CSS cursor class based on active tool
+  const getToolCursorClass = () => {
+    if (tool === "hand") {
+      return isPanning ? styles.cursorGrabbing : styles.cursorGrab;
+    }
+    if (tool === "pen") {
+      return styles.cursorPen;
+    }
+    if (tool === "eraser") {
+      return styles.cursorEraser;
+    }
+    if (tool === "text") {
+      return styles.cursorText;
+    }
+    if (tool === "select") {
+      return styles.cursorMagic;
+    }
+    return styles.cursorCrosshair;
+  };
+
   return (
     <div
       className={`${styles.container} ${theme === "dark" ? styles.darkContainer : ""}`}
@@ -386,7 +406,7 @@ const Whiteboard = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onDoubleClick={handleDoubleClick}
-        className={`${styles.canvas} ${tool === "hand" ? styles.cursorGrab : styles.cursorCrosshair}`}
+        className={`${styles.canvas} ${getToolCursorClass()}`}
       />
 
       {/* Top-Left: Navigation & Board Title */}
