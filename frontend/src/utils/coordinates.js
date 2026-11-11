@@ -21,7 +21,11 @@ const worldToScreen = (point, pan, zoom) => {
 
 // Stroke translation by (dx, dy) to move to new position
 const moveStroke = (stroke, dx, dy) => {
-  if (stroke.type === "rectangle" || stroke.type === "text") {
+  if (
+    stroke.type === "rectangle" ||
+    stroke.type === "text" ||
+    stroke.type === "note"
+  ) {
     // Text box is similar to rectangle
 
     // Moved rectangle
@@ -84,13 +88,14 @@ const resizeElements = (actualElements, actualBounds, newBounds) => {
       : y;
 
   return actualElements.map((el) => {
-    if (el.type === "rectangle") {
+    if (el.type === "rectangle" || el.type === "note") {
+      const isNote = el.type === "note";
       return {
         ...el,
         x: mapX(el.x),
         y: mapY(el.y),
-        width: el.width * scaleX,
-        height: el.height * scaleY,
+        width: isNote ? Math.max(120, el.width * scaleX) : el.width * scaleX,
+        height: isNote ? Math.max(120, el.height * scaleY) : el.height * scaleY,
       };
     } else if (el.type === "text") {
       const currentFontSize =

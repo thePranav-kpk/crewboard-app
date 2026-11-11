@@ -8,6 +8,8 @@ const useText = ({
   setElements,
   pan,
   zoom,
+  tool,
+  user,
   color,
   setColor,
   setSelectedIds,
@@ -69,7 +71,7 @@ const useText = ({
   const findHitText = (worldPoint) => {
     // Latest element will be on top so reverse the elements
     return [...elements].reverse().find((stroke) => {
-      if (stroke.type !== "text") return false;
+      if (stroke.type !== "text" && stroke.type !== "note") return false;
 
       const bounds = getStrokeBounds(stroke);
       const pad = 8 / zoom;
@@ -89,6 +91,8 @@ const useText = ({
     if (setSelectionBox) setSelectionBox(null);
 
     if (existingText) {
+      const isNote = existingText.type === "note";
+
       // If hit on existing text box, convert canvas coordinates to screen coordinates
       const screenPoint = worldToScreen(
         { x: existingText.x, y: existingText.y },
@@ -97,12 +101,15 @@ const useText = ({
       );
 
       setTextInput({
+        type: isNote ? "note" : "text",
         id: existingText.id,
         screenX: screenPoint.x,
         screenY: screenPoint.y,
         worldX: existingText.x,
         worldY: existingText.y,
         text: existingText.text,
+        width: existingText.width || 180,
+        height: existingText.height || 180,
         color: existingText.color,
         fontSize:
           existingText.fontSize ||
@@ -114,16 +121,38 @@ const useText = ({
       // Synchronize toolbar color picker with the selected text's color
       if (existingText.color) setColor(existingText.color);
     } else {
-      // Empty text box
-      setTextInput({
-        screenX: screenPoint.x ?? screenPoint.clientX,
-        screenY: screenPoint.y ?? screenPoint.clientY,
-        worldX: worldPoint.x,
-        worldY: worldPoint.y,
-        text: "",
-        color,
-        fontSize: 24,
-      });
+      const isNote = tool === "note";
+
+      if (isNote) {
+        const newWorldPoint = { x: worldPoint.x - 90, y: worldPoint.y - 90 };
+        const screenPoint = worldToScreen(newWorldPoint, pan, zoom);
+
+        // Empty sticky note
+        setTextInput({
+          type: "note",
+          screenX: screenPoint.x,
+          screenY: screenPoint.y,
+          worldX: newWorldPoint.x,
+          worldY: newWorldPoint.y,
+          width: 180,
+          height: 180,
+          text: "",
+          color,
+          author: user?.name || "Guest",
+          fontSize: 20,
+        });
+      } else {
+        // Empty text box
+        setTextInput({
+          screenX: screenPoint.x ?? screenPoint.clientX,
+          screenY: screenPoint.y ?? screenPoint.clientY,
+          worldX: worldPoint.x,
+          worldY: worldPoint.y,
+          text: "",
+          color,
+          fontSize: 24,
+        });
+      }
     }
   };
 
@@ -203,6 +232,7 @@ const useText = ({
     if (!textInput) return;
 
     const text = e.target.value.trim();
+    const isNote = textInput.type === "note";
 
     if (textInput.id) {
       // Reselecting and editing an existing text element
@@ -214,30 +244,48 @@ const useText = ({
           (existing?.size && existing.size >= 10 ? existing.size : 24);
         const { width, height } = getWidthHeight(text, fontSize);
 
+        const hasTextChanged = text !== existing.text;
+        const hasColorChanged =
+          textInput.color && textInput.color !== existing.color;
+
         // Updated element
-        const updated = {
-          ...existing,
-          text,
-          width,
-          height,
-          color,
-          fontSize,
-        };
+        let updated = {};
 
-        // Add the action to undo stack and clear redo stack
-        setUndoStack((prev) => [
-          ...prev,
-          { type: "edit", stroke: updated, previous: existing },
-        ]);
-        setRedoStack([]);
+        if (isNote) {
+          if (isNote) {
+            updated = {
+              ...existing,
+              text,
+              color: textInput.color || existing.color,
+            };
+          }
+        } else {
+          updated = {
+            ...existing,
+            text,
+            width,
+            height,
+            color,
+            fontSize,
+          };
+        }
 
-        // Broadcast to peers
-        emitUpdate([updated]);
+        if (hasTextChanged || hasColorChanged) {
+          // Add the action to undo stack and clear redo stack
+          setUndoStack((prev) => [
+            ...prev,
+            { type: "edit", stroke: updated, previous: existing },
+          ]);
+          setRedoStack([]);
 
-        // Replace the element with updated element
-        setElements((prev) =>
-          prev.map((el) => (el.id === textInput.id ? updated : el)),
-        );
+          // Broadcast to peers
+          emitUpdate([updated]);
+
+          // Replace the element with updated element
+          setElements((prev) =>
+            prev.map((el) => (el.id === textInput.id ? updated : el)),
+          );
+        }
       }
       // If no text ie all text has been backspaced
       else {
@@ -263,17 +311,34 @@ const useText = ({
       const { width, height } = getWidthHeight(text, fontSize);
 
       // New element
-      const element = {
-        id: crypto.randomUUID(),
-        type: "text",
-        text,
-        x: textInput.worldX,
-        y: textInput.worldY,
-        width,
-        height,
-        color,
-        fontSize,
-      };
+      let element = {};
+
+      if (isNote) {
+        element = {
+          id: crypto.randomUUID(),
+          type: "note",
+          text,
+          x: textInput.worldX,
+          y: textInput.worldY,
+          width: 180,
+          height: 180,
+          color: textInput.color || color || "#fef08a",
+          author: textInput.author || user?.name || "Guest",
+          fontSize,
+        };
+      } else {
+        element = {
+          id: crypto.randomUUID(),
+          type: "text",
+          text,
+          x: textInput.worldX,
+          y: textInput.worldY,
+          width,
+          height,
+          color,
+          fontSize,
+        };
+      }
 
       // Add the action to undo stack and clear redo stack
       setUndoStack((prev) => [...prev, { type: "add", stroke: element }]);
@@ -347,7 +412,14 @@ const useText = ({
     }
 
     // Render the text when pressed Enter and clear text box
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (textInput.type !== "note" && e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      e.target.blur();
+      return;
+    }
+
+    // Render the multi-line text when pressed Ctrl + Enter and clear text box
+    if (textInput.type === "note" && e.key === "Enter" && isCtrlOrCmd) {
       e.preventDefault();
       e.target.blur();
       return;

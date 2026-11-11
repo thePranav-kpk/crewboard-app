@@ -109,8 +109,8 @@ const isStrokeHit = (stroke, eraserPoint, eraserRadius = 8) => {
         { x: stroke.endX, y: stroke.endY },
       ) <= threshold
     );
-  } else if (stroke.type === "text") {
-    // Check if eraserPoint is within text box
+  } else if (stroke.type === "text" || stroke.type === "note") {
+    // Check if eraserPoint is within text box or sticky note
     return (
       stroke.x - threshold <= eraserPoint.x &&
       eraserPoint.x <= stroke.x + stroke.width + threshold &&
@@ -149,8 +149,12 @@ const getStrokeBounds = (stroke) => {
       width: maxX - minX,
       height: maxY - minY,
     };
-  } else if (stroke.type === "rectangle" || stroke.type === "text") {
-    // Text box is similar to rectangle
+  } else if (
+    stroke.type === "rectangle" ||
+    stroke.type === "text" ||
+    stroke.type === "note"
+  ) {
+    // Text box and Sticky Note are similar to rectangle
 
     return {
       minX: stroke.x,

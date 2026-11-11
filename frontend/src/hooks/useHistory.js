@@ -87,7 +87,7 @@ const useHistory = ({
 
       // Add to redo stack
       setRedoStack((prev) => [...prev, action]);
-    } else if (action.type === "batch_resize") {
+    } else if (action.type === "batch_edit" || action.type === "batch_resize") {
       // Restore elements to actual size
       setElements((prev) =>
         prev.map((element) => {
@@ -179,7 +179,7 @@ const useHistory = ({
 
       // Add to undo stack
       setUndoStack((prev) => [...prev, action]);
-    } else if (action.type === "batch_resize") {
+    } else if (action.type === "batch_edit" || action.type === "batch_resize") {
       // Restore elements to new size
       setElements((prev) =>
         prev.map((element) => {

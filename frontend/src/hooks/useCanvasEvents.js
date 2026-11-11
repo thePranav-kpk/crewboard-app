@@ -1,6 +1,5 @@
 import { useRef } from "react";
 import { screenToWorld } from "../utils/coordinates.js";
-import { isStrokeHit } from "../utils/hitTest.js";
 
 const SHAPE_TOOLS = ["rectangle", "circle", "arrow", "line"];
 const isShapeTool = (t) => SHAPE_TOOLS.includes(t);
@@ -11,8 +10,6 @@ const useCanvasEvents = ({
   zoom,
   tool,
   setTool,
-  elements,
-  setElements,
   textInput,
   handleTextPointerDown,
   handleTextPointerUp,
@@ -38,7 +35,6 @@ const useCanvasEvents = ({
   handleShapePointerMove,
   handleShapePointerUp,
   emitCursor,
-  emitDelete,
 }) => {
   // Ref to store last timestamp when cursor changed
   const lastCursorEmitRef = useRef(0);
@@ -152,7 +148,7 @@ const useCanvasEvents = ({
       handleShapePointerUp(worldPoint);
     }
 
-    if (tool === "text" && !isPanning) {
+    if ((tool === "text" || tool === "note") && !isPanning) {
       handleTextPointerUp(e, worldPoint);
     }
 
@@ -163,47 +159,17 @@ const useCanvasEvents = ({
     }
   };
 
-  // Double click to select and edit text box or select any other element for moving
+  // Double click to edit any text element
   const handleDoubleClick = (e) => {
-    const worldPoint = getWorldPoint(e);
+    if (tool != "select") return;
 
     // If double-clicked an existing text element, open it for editing
+    const worldPoint = getWorldPoint(e);
     const hitText = handleTextDoubleClick(worldPoint);
+
     if (hitText) {
-      setTool("text");
+      setTool(hitText.type === "note" ? "note" : "text");
       setSelectedIds([]);
-      setSelectionBox(null);
-      return;
-    }
-
-    // Hit test any other canvas stroke or shape from top to bottom
-    const pad = 8 / zoom;
-    const hitElement = [...elements]
-      .reverse()
-      .find((el) => isStrokeHit(el, worldPoint, pad));
-
-    if (hitElement) {
-      // Clean up micro-dot if pen was active during the double-click
-      if (tool === "pen") {
-        setElements((prev) => {
-          const last = prev[prev.length - 1];
-          if (
-            last &&
-            last.id !== hitElement.id &&
-            last.type === "stroke" &&
-            last.points?.length <= 2
-          ) {
-            emitDelete(last.id);
-            return prev.slice(0, -1);
-          }
-
-          return prev;
-        });
-      }
-
-      // Switch to select tool and select the element for immediate moving
-      setTool("select");
-      setSelectedIds([hitElement.id]);
       setSelectionBox(null);
     }
   };

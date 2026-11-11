@@ -1,4 +1,12 @@
-import { Pencil, Eraser, Wand2, Hand, Undo2, Redo2 } from "lucide-react";
+import {
+  Pencil,
+  Eraser,
+  Wand2,
+  Hand,
+  Undo2,
+  Redo2,
+  StickyNote,
+} from "lucide-react";
 import styles from "./Toolbar.module.css";
 
 const COLORS = [
@@ -9,6 +17,15 @@ const COLORS = [
   { name: "Green", hex: "#10b981" },
   { name: "Amber", hex: "#f59e0b" },
   { name: "Purple", hex: "#8b5cf6" },
+];
+
+const COLORS_NOTE = [
+  { name: "Yellow", hex: "#fef08a" },
+  { name: "Pink", hex: "#fbcfe8" },
+  { name: "Sky Blue", hex: "#bae6fd" },
+  { name: "Mint", hex: "#bbf7d0" },
+  { name: "Peach", hex: "#fed7aa" },
+  { name: "Lavender", hex: "#e9d5ff" },
 ];
 
 const SIZES = [
@@ -22,6 +39,7 @@ const TOOLS = [
   { id: "eraser", label: "Eraser", icon: Eraser },
   { id: "select", label: "Magic Pen", icon: Wand2 },
   { id: "hand", label: "Hand", icon: Hand },
+  { id: "note", label: "Sticky Note", icon: StickyNote },
 ];
 
 const Divider = ({ isDark }) => (
@@ -33,6 +51,8 @@ const Toolbar = ({
   setTool,
   color,
   setColor,
+  setLastNoteColor,
+  setLastStrokeColor,
   size,
   setSize,
   theme,
@@ -40,16 +60,21 @@ const Toolbar = ({
   handleRedo,
   canUndo,
   canRedo,
+  elements,
+  selectedIds,
 }) => {
+  const selectedElement = elements.find((el) => selectedIds?.includes(el.id));
+  const isNoteSelected = selectedElement?.type === "note";
+  const colorsToSelect =
+    tool === "note" || isNoteSelected ? COLORS_NOTE : COLORS;
+  const activeColor = selectedElement?.color || color;
+
   const isDark = theme === "dark";
-  const isColorDisabled = ![
-    "pen",
-    "rectangle",
-    "circle",
-    "line",
-    "arrow",
-    "text",
-  ].includes(tool);
+  const isColorDisabled =
+    !isNoteSelected &&
+    !["pen", "rectangle", "circle", "line", "arrow", "text", "note"].includes(
+      tool,
+    );
   const isSizeDisabled = ![
     "pen",
     "rectangle",
@@ -116,19 +141,24 @@ const Toolbar = ({
       <div
         className={`${styles.colorSection} ${isColorDisabled ? styles.disabledSection : ""}`}
       >
-        {COLORS.map((c) => {
+        {colorsToSelect.map((c) => {
           // Skip the color matching the theme
           if (
             (c.name === "Charcoal" && theme === "dark") ||
             (c.name === "White" && theme === "light")
           )
             return null;
-          const isSelected = color === c.hex && !isColorDisabled;
+          const isSelected = activeColor === c.hex && !isColorDisabled;
+
           return (
             <button
               key={c.hex}
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => setColor(c.hex)}
+              onClick={() => {
+                if (tool === "note" || isNoteSelected) setLastNoteColor(c.hex);
+                else setLastStrokeColor(c.hex);
+                setColor(c.hex);
+              }}
               title={c.name}
               className={`${styles.colorSwatch} ${isDark ? styles.colorSwatchDark : ""} ${
                 isSelected ? styles.colorSwatchActive : ""
@@ -151,6 +181,7 @@ const Toolbar = ({
       >
         {SIZES.map((s) => {
           const isSelected = size === s.value && !isSizeDisabled;
+
           return (
             <button
               key={s.label}

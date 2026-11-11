@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useRef, useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext.jsx";
 
 import usePanZoom from "../hooks/usePanZoom.js";
 import useSocket from "../hooks/useSocket.js";
@@ -34,9 +35,6 @@ const Whiteboard = ({
   // Reference to Canvas DOM element
   const canvasRef = useRef(null);
 
-  // Ref to store last timestamp when cursor changed
-  const lastCursorEmitRef = useRef(0);
-
   // Array of all finished strokes
   const [elements, setElements] = useState([]);
   const elementsRef = useRef(elements);
@@ -47,6 +45,14 @@ const Whiteboard = ({
     theme === "light" ? "#1e1e1e" : "#ffffff",
   );
   const [size, setSize] = useState(4);
+
+  const { user } = useAuth();
+
+  // Store last used Sticky Note color and stroke color to help switching between tools
+  const [lastNoteColor, setLastNoteColor] = useState("#fef08a");
+  const [lastStrokeColor, setLastStrokeColor] = useState(() =>
+    theme === "light" ? "#1e1e1e" : "#ffffff",
+  );
 
   const {
     pan,
@@ -195,6 +201,7 @@ const Whiteboard = ({
 
   const {
     textInput,
+    setTextInput,
     textareaRef,
     handleTextPointerDown,
     handleTextPointerUp,
@@ -209,6 +216,8 @@ const Whiteboard = ({
     setElements,
     pan,
     zoom,
+    tool,
+    user,
     color,
     setColor,
     setSelectedIds,
@@ -232,8 +241,6 @@ const Whiteboard = ({
     zoom,
     tool,
     setTool,
-    elements,
-    setElements,
     textInput,
     handleTextPointerDown,
     handleTextPointerUp,
@@ -259,7 +266,6 @@ const Whiteboard = ({
     handleShapePointerMove,
     handleShapePointerUp,
     emitCursor,
-    emitDelete,
   });
 
   useClipboard({
@@ -369,6 +375,76 @@ const Whiteboard = ({
     return styles.cursorCrosshair;
   };
 
+  // Handle color changes when switching from Sticky Note to other tools
+  const handleToolChange = (newTool) => {
+    // Set last used Sticky Note color if switched to Sticky Note
+    if (newTool === "note") setColor(lastNoteColor);
+    // Set last used stroke color if switched out of Sticky Note to any other tool
+    else setColor(lastStrokeColor);
+
+    setTool(newTool);
+  };
+
+  const handleColorChange = (newColor) => {
+    setColor(newColor);
+
+    // Typing inside a note (Editing mode)
+    if (textInput) {
+      setTextInput((prev) => (prev ? { ...prev, color: newColor } : null));
+
+      // Existing note
+      if (textInput.id) {
+        setElements((prev) => {
+          const updated = prev.map((el) =>
+            el.id === textInput.id ? { ...el, color: newColor } : el,
+          );
+
+          // Broadcast to peers about change in color
+          emitUpdate(updated.filter((el) => el.id === textInput.id));
+          return updated;
+        });
+      }
+      return;
+    }
+
+    // Selecting notes with the Magic Pen (Selection mode)
+    if (selectedIds.length > 0) {
+      const previousElements = elements.filter((el) =>
+        selectedIds.includes(el.id),
+      );
+      const updatedElements = elements.map((el) =>
+        selectedIds.includes(el.id) ? { ...el, color: newColor } : el,
+      );
+
+      setElements(updatedElements);
+
+      const changedElements = updatedElements.filter((el) =>
+        selectedIds.includes(el.id),
+      );
+
+      // Broadcast to peers about change in color
+      emitUpdate(changedElements);
+
+      if (previousElements.length > 0) {
+        setUndoStack((prev) => [
+          ...prev,
+          previousElements.length === 1
+            ? {
+                type: "edit",
+                stroke: changedElements[0],
+                previous: previousElements[0],
+              }
+            : {
+                type: "batch_edit",
+                current: changedElements,
+                previous: previousElements,
+              },
+        ]);
+        setRedoStack([]);
+      }
+    }
+  };
+
   return (
     <div
       className={`${styles.container} ${theme === "dark" ? styles.darkContainer : ""}`}
@@ -378,6 +454,7 @@ const Whiteboard = ({
         textareaRef={textareaRef}
         theme={theme}
         color={color}
+        zoom={zoom}
         onBlur={handleTextBlur}
         onInput={handleTextInput}
         onKeyDown={handleTextKeyDown}
@@ -424,9 +501,11 @@ const Whiteboard = ({
       {/* Render the toolbar */}
       <Toolbar
         tool={tool}
-        setTool={setTool}
+        setTool={handleToolChange}
         color={color}
-        setColor={setColor}
+        setColor={handleColorChange}
+        setLastNoteColor={setLastNoteColor}
+        setLastStrokeColor={setLastStrokeColor}
         size={size}
         setSize={setSize}
         theme={theme}
@@ -434,10 +513,12 @@ const Whiteboard = ({
         handleRedo={handleRedo}
         canUndo={canUndo}
         canRedo={canRedo}
+        elements={elements}
+        selectedIds={selectedIds}
       />
 
       {/* Render the sidebar */}
-      <Sidebar tool={tool} setTool={setTool} theme={theme} />
+      <Sidebar tool={tool} setTool={handleToolChange} theme={theme} />
 
       {/* Render the zoom controls */}
       <ZoomControls
