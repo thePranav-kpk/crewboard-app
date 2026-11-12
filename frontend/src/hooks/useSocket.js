@@ -8,6 +8,7 @@ const useSocket = ({
   onInitialElements,
   onStrokeDeleted,
   onElementsUpdated,
+  onReactionReceived,
 }) => {
   const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -122,6 +123,11 @@ const useSocket = ({
       setIsLocked(isLocked);
     });
 
+    // Event on reactions
+    socket.on("reaction:send", (data) => {
+      onReactionReceived(data);
+    });
+
     return () => {
       socket.off("room:rename");
       socket.disconnect();
@@ -150,6 +156,10 @@ const useSocket = ({
     socketRef.current?.emit("room:rename", { roomId, name });
   };
 
+  const emitReaction = (emoji) => {
+    socketRef.current?.emit("reaction:send", { emoji });
+  };
+
   return {
     isConnected,
     isOwner,
@@ -167,6 +177,7 @@ const useSocket = ({
     emitDelete,
     emitUpdate,
     emitRename,
+    emitReaction,
   };
 };
 

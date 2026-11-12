@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Share2,
   Check,
@@ -8,7 +8,9 @@ import {
   Download,
   Lock,
   Unlock,
+  Smile,
 } from "lucide-react";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import ExportModal from "./ExportModal.jsx";
 import ActiveUsers from "./ActiveUsers.jsx";
@@ -27,12 +29,29 @@ const Header = ({
   peers,
   jumpToUser,
   ownerId,
+  onSendReaction,
 }) => {
   const { user, logout } = useAuth();
   const [copied, setCopied] = useState(false);
   const [showExport, setShowExport] = useState(false);
 
   const isDark = theme === "dark";
+
+  const [showPicker, setShowPicker] = useState(false);
+  const pickerRef = useRef(null);
+
+  // Close dropdown when clicked outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+        setShowPicker(false);
+      }
+    };
+    if (showPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showPicker]);
 
   const handleCopy = async () => {
     try {
@@ -106,6 +125,39 @@ const Header = ({
           {isLocked ? <Lock size={15} color="#ef4444" /> : <Unlock size={15} />}
         </button>
       )}
+
+      <div
+        className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`}
+      />
+
+      {/* Emoji Reactions Keyboard Dropdown */}
+      <div className={styles.pickerWrapper} ref={pickerRef}>
+        <button
+          type="button"
+          onClick={() => setShowPicker((prev) => !prev)}
+          className={`${styles.iconButton} ${isDark ? styles.iconButtonDark : ""}`}
+          title="Send Emoji Reaction"
+          aria-label="Send Emoji Reaction"
+        >
+          <Smile size={16} />
+        </button>
+
+        {showPicker && (
+          <div className={styles.pickerDropdown}>
+            <EmojiPicker
+              theme={theme === "dark" ? Theme.DARK : Theme.LIGHT}
+              onEmojiClick={(emojiData) => {
+                onSendReaction?.(emojiData.emoji);
+              }}
+              width={340}
+              height={400}
+              searchDisabled={false}
+              lazyLoadEmojis={true}
+              previewConfig={{ showPreview: false }}
+            />
+          </div>
+        )}
+      </div>
 
       <div
         className={`${styles.divider} ${isDark ? styles.dividerDark : ""}`}

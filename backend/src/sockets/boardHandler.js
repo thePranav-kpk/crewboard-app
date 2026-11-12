@@ -122,6 +122,17 @@ const registerBoardHandlers = (io, socket) => {
       });
     }
   });
+
+  // Event on sending reaction
+  socket.on("reaction:send", ({ emoji }) => {
+    if (socket.currentRoom) {
+      socket.to(socket.currentRoom).emit("reaction:send", {
+        emoji,
+        userId: socket?.user.id,
+        userName: socket?.user.name || "Peer",
+      });
+    }
+  });
 };
 
 export { registerBoardHandlers };

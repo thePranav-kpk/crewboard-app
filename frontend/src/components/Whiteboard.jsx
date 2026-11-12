@@ -22,6 +22,7 @@ import Sidebar from "./Sidebar.jsx";
 import TextOverlay from "./TextOverlay.jsx";
 import BoardTitleBar from "./BoardTitleBar.jsx";
 import BoardNotFound from "./BoardNotFound.jsx";
+import ReactionsOverlay from "./ReactionsOverlay.jsx";
 
 import styles from "./Whiteboard.module.css";
 
@@ -45,6 +46,8 @@ const Whiteboard = ({
     theme === "light" ? "#1e1e1e" : "#ffffff",
   );
   const [size, setSize] = useState(4);
+
+  const [reactions, setReactions] = useState([]);
 
   const { user } = useAuth();
 
@@ -85,6 +88,7 @@ const Whiteboard = ({
     emitDelete,
     emitUpdate,
     emitRename,
+    emitReaction,
   } = useSocket({
     roomId,
     token,
@@ -113,6 +117,22 @@ const Whiteboard = ({
             return newElement ? newElement : element;
           }),
         );
+      }
+    },
+    onReactionReceived: (data) => {
+      if (data?.emoji) {
+        const id = crypto.randomUUID();
+        const offset = Math.floor(Math.random() * 200) - 100;
+
+        setReactions((prev) => [
+          ...prev,
+          { id, emoji: data.emoji, userName: data.userName || "Peer", offset },
+        ]);
+
+        // Auto-cleanup after 2s
+        setTimeout(() => {
+          setReactions((prev) => prev.filter((r) => r.id !== id));
+        }, 2600);
       }
     },
   });
@@ -445,6 +465,25 @@ const Whiteboard = ({
     }
   };
 
+  const handleSendReaction = (emoji) => {
+    const id = crypto.randomUUID();
+    const offset = Math.floor(Math.random() * 200) - 100;
+
+    // Show on our own screen immediately
+    setReactions((prev) => [
+      ...prev,
+      { id, emoji, userName: user?.name || "You", offset },
+    ]);
+
+    // Broadcast to peers
+    emitReaction(emoji);
+
+    // Auto-cleanup after 2s
+    setTimeout(() => {
+      setReactions((prev) => prev.filter((r) => r.id !== id));
+    }, 2600);
+  };
+
   return (
     <div
       className={`${styles.container} ${theme === "dark" ? styles.darkContainer : ""}`}
@@ -493,10 +532,14 @@ const Whiteboard = ({
         peers={peers}
         jumpToUser={jumpToUser}
         ownerId={ownerId}
+        onSendReaction={handleSendReaction}
       />
 
       {/* Render peer cursors */}
       <PeerCursors peerCursors={peerCursors} pan={pan} zoom={zoom} />
+
+      {/* Render live floating reactions */}
+      <ReactionsOverlay reactions={reactions} theme={theme} />
 
       {/* Render the toolbar */}
       <Toolbar
