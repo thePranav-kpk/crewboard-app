@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { screenToWorld } from "../utils/coordinates.js";
+import { isStrokeHit } from "../utils/hitTest.js";
 
 const SHAPE_TOOLS = ["rectangle", "circle", "arrow", "line"];
 const isShapeTool = (t) => SHAPE_TOOLS.includes(t);
@@ -10,6 +11,9 @@ const useCanvasEvents = ({
   zoom,
   tool,
   setTool,
+  elements,
+  setElements,
+  emitDelete,
   textInput,
   handleTextPointerDown,
   handleTextPointerUp,
@@ -161,15 +165,64 @@ const useCanvasEvents = ({
 
   // Double click to edit any text element
   const handleDoubleClick = (e) => {
-    if (tool != "select") return;
+    const worldPoint = getWorldPoint(e);
+
+    // Helper to identify accidental 1 or 2 micro-dots created under the cursor by the double-click
+    const isClickDot = (el) => {
+      if (el.type !== "stroke" || !el.points || el.points.length > 2)
+        return false;
+
+      const p = el.points[0];
+      return Math.hypot(p.x - worldPoint.x, p.y - worldPoint.y) < 20 / zoom;
+    };
+
+    // Helper to clean up the 1 or 2 pen dots created during the double-click
+    const pruneRecentClickDots = () => {
+      if (tool === "pen") {
+        setElements((prev) => {
+          const toDelete = [];
+
+          // Only remove the dots at the very tail (The ones created by this double click)
+          for (let i = prev.length - 1; i >= 0 && i >= prev.length - 2; i--) {
+            if (isClickDot(prev[i])) toDelete.push(prev[i]);
+          }
+
+          if (toDelete.length > 0) {
+            toDelete.forEach((dot) => emitDelete?.(dot.id));
+            return prev.filter((el) => !toDelete.some((d) => d.id === el.id));
+          }
+
+          return prev;
+        });
+      }
+    };
 
     // If double-clicked an existing text element, open it for editing
-    const worldPoint = getWorldPoint(e);
     const hitText = handleTextDoubleClick(worldPoint);
-
     if (hitText) {
+      pruneRecentClickDots();
       setTool(hitText.type === "note" ? "note" : "text");
       setSelectedIds([]);
+      setSelectionBox(null);
+      return;
+    }
+
+    // Hit test any other canvas stroke or shape from top to bottom
+    const pad = 8 / zoom;
+
+    // Select elements other than 2 dots rendered due to double click on Pen
+    const realElements = (elements || []).filter((el) => !isClickDot(el));
+    const hitElement = [...realElements]
+      .reverse()
+      .find((el) => isStrokeHit(el, worldPoint, pad));
+
+    if (hitElement) {
+      // Clean up accidental micro-dot if pen was active during the double-click
+      pruneRecentClickDots();
+
+      // Switch to Magic Pen (select) tool and select the element for immediate moving or resizing
+      setTool("select");
+      setSelectedIds([hitElement.id]);
       setSelectionBox(null);
     }
   };
