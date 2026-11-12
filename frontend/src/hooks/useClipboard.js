@@ -8,8 +8,10 @@ const useClipboard = ({
   setElements,
   selectedIds,
   setSelectedIds,
+  setSelectionBox,
   mousePosRef,
   emitStroke,
+  emitDelete,
   setUndoStack,
   setRedoStack,
   setTool,
@@ -93,11 +95,42 @@ const useClipboard = ({
     setRedoStack([]);
   };
 
-  // Handle copy and paste using keys
+  const deleteSelected = () => {
+    if (!selectedIds.length) return;
+
+    // Find all elements to delete
+    const toDelete = elements.filter((el) => selectedIds.includes(el.id));
+    if (!toDelete.length) return;
+
+    // Remove from local elements
+    setElements((prev) => prev.filter((el) => !selectedIds.includes(el.id)));
+
+    // Broadcast deletion to peers
+    selectedIds.forEach((id) => emitDelete?.(id));
+
+    // Add to undo stack
+    setUndoStack((prev) => [...prev, { type: "erase", strokes: toDelete }]);
+    setRedoStack([]);
+
+    // Clear selection and selection box
+    setSelectedIds([]);
+    if (setSelectionBox) setSelectionBox(null);
+  };
+
+  // Handle copy, paste and delete using keys
   useEffect(() => {
     const handleKeydown = (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
         return;
+
+      // Remove selected elements using Delete / Backspace
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedIds.length > 0) {
+          e.preventDefault();
+          deleteSelected();
+        }
+        return;
+      }
 
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
       if (!isCtrlOrCmd) return;
