@@ -14,18 +14,30 @@ const ActiveUsers = ({
 
   const isDark = theme === "dark";
 
-  // To close active users pop-up
+  // Close active users pop-up when clicked outside or on Escape
   useEffect(() => {
+    if (!showUsers) return;
+
     const handlePointerDown = (e) => {
       if (!usersRef.current || !usersRef.current.contains(e.target)) {
         setShowUsers(false);
       }
     };
 
-    window.addEventListener("pointerdown", handlePointerDown);
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setShowUsers(false);
+      }
+    };
 
-    return () => window.removeEventListener("pointerdown", handlePointerDown);
-  }, []);
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showUsers]);
 
   const currentUserId = (user?.id || user?._id)?.toString();
 

@@ -405,9 +405,37 @@ const useText = ({
 
     e.stopPropagation();
 
-    // Clear text input when pressed Esc
     if (e.key === "Escape") {
-      setTextInput(null);
+      e.preventDefault();
+      const text = e.target.value.trim();
+
+      // If no text, remove existing text element or sticky note
+      if (text.length === 0) {
+        if (textInput.id) {
+          const existing = elements.find((el) => el.id === textInput.id);
+
+          // Remove from local canvas elements
+          setElements((prev) => prev.filter((el) => el.id !== textInput.id));
+
+          // Broadcast delete to peers
+          emitDelete(textInput.id);
+
+          // Add to undo stack
+          if (existing) {
+            setUndoStack((prev) => [
+              ...prev,
+              { type: "erase", strokes: [existing] },
+            ]);
+            setRedoStack([]);
+          }
+        }
+
+        // Discard overlay
+        setTextInput(null);
+      } else {
+        // If text, commit and save by blurring
+        e.target.blur();
+      }
       return;
     }
 

@@ -40,17 +40,29 @@ const Header = ({
   const [showPicker, setShowPicker] = useState(false);
   const pickerRef = useRef(null);
 
-  // Close dropdown when clicked outside
+  // Close dropdown when clicked outside or on Escape
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (pickerRef.current && !pickerRef.current.contains(e.target)) {
         setShowPicker(false);
       }
     };
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setShowPicker(false);
+      }
+    };
+
     if (showPicker) {
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
     }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [showPicker]);
 
   const handleCopy = async () => {

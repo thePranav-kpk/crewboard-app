@@ -322,6 +322,24 @@ const Whiteboard = ({
     }
   }, [roomId]);
 
+  // Deselect on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+        return;
+
+      if (e.key === "Escape") {
+        if (selectedIds.length > 0) {
+          setSelectedIds([]);
+          setSelectionBox(null);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedIds, setSelectedIds, setSelectionBox]);
+
   // Zooming, sizing and redrawing loop
   useCanvasRender({
     canvasRef,
