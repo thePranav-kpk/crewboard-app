@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { screenToWorld } from "../utils/coordinates";
 
-const usePanZoom = () => {
+const usePanZoom = (tool) => {
   // Lazy initial state -> For first render JS calculates the function and for next renders it directly uses the value initialized
   const [zoom, setZoom] = useState(() => {
     const savedZoomLevel = localStorage.getItem("zoom_level");
@@ -26,13 +26,36 @@ const usePanZoom = () => {
   const handleWheel = (e) => {
     e.preventDefault();
 
+    // When on Hand tool: 2D Pan navigation (up, down, left, right)
+
+    // Ctrl + Mouse Wheel (Used for intentional zooming) so only navigate if not holding Ctrl / Cmd
+    if (tool === "hand" && !(e.ctrlKey || e.metaKey)) {
+      // Support Shift + vertical mouse wheel for horizontal scrolling on standard mouse
+      const dx = e.shiftKey && e.deltaX === 0 ? e.deltaY : e.deltaX;
+      const dy = e.shiftKey ? 0 : e.deltaY;
+
+      setPan((prev) => ({
+        x: prev.x - dx,
+        y: prev.y - dy,
+      }));
+
+      return;
+    }
+
+    // Zoom navigation: On other tools or when holding Ctrl/Cmd on Hand tool
+
     // Get cursor position relative to window (or canvas container)
     const cursorX = e.clientX;
     const cursorY = e.clientY;
 
+    const rawDelta = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+
     // Determine zoom scale factor
-    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-    const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.1), 5.0);
+    const zoomFactor = Math.exp(-rawDelta * 0.0015);
+
+    // Safety clamp per event to prevent sudden jumps from high-momentum trackpad flicks
+    const clampedFactor = Math.min(Math.max(zoomFactor, 0.85), 1.15);
+    const newZoom = Math.min(Math.max(zoom * clampedFactor, 0.1), 5.0);
 
     // Find world coordinates under cursor
     const worldPoint = screenToWorld({ x: cursorX, y: cursorY }, pan, zoom);

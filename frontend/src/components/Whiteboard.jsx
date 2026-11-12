@@ -69,7 +69,7 @@ const Whiteboard = ({
     resetView,
     zoomIn,
     zoomOut,
-  } = usePanZoom();
+  } = usePanZoom(tool);
 
   const {
     isConnected,
